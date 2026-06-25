@@ -1,3 +1,6 @@
+# 文本分块模块：提供递归字符切分（RecursiveChunker）和语义切分（semantic_chunk）两种策略。
+# 递归切分按标点/换行符层级拆分；语义切分根据相邻句子嵌入余弦相似度决定是否合并。
+
 from dataclasses import dataclass
 from enum import Enum
 
@@ -11,6 +14,8 @@ class ChunkingStrategy(Enum):
 
 
 class RecursiveChunker:
+    """基于 LangChain RecursiveCharacterTextSplitter 的递归分块器，支持中英文标点。"""
+
     def __init__(self, chunk_size: int = 512, chunk_overlap: int = 64):
         self.splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
@@ -20,6 +25,7 @@ class RecursiveChunker:
         )
 
     def split_text(self, text: str) -> list[str]:
+        """将输入文本按配置切分，返回文本片段列表。"""
         docs = self.splitter.create_documents([text])
         return [doc.page_content for doc in docs]
 
@@ -29,6 +35,7 @@ def get_chunker(
     chunk_size: int = 512,
     chunk_overlap: int = 64,
 ) -> RecursiveChunker:
+    """根据策略类型返回对应的分块器实例（当前语义分块策略暂未实现，均回退到递归分块）。"""
     if strategy == ChunkingStrategy.SEMANTIC:
         pass
     return RecursiveChunker(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
@@ -49,6 +56,7 @@ def recursive_chunk(
     chunk_overlap: int = 64,
     page_num: int = 0,
 ) -> list[TextChunk]:
+    """对单段文本做递归字符分块，返回带字符偏移量的 TextChunk 列表。"""
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,

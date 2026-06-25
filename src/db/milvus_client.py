@@ -1,8 +1,12 @@
+# Milvus 向量数据库客户端：管理连接/断开，以及集合的创建（含稠密/稀疏向量索引）。
+# 若集合已存在则直接返回，避免重复创建。
+
 from pymilvus import connections, Collection, FieldSchema, CollectionSchema, DataType, utility
 from src.config import settings
 
 
 def connect_milvus():
+    """建立与 Milvus 服务的默认连接。"""
     connections.connect(
         alias="default",
         host=settings.milvus_host,
@@ -11,10 +15,12 @@ def connect_milvus():
 
 
 def disconnect_milvus():
+    """断开默认 Milvus 连接。"""
     connections.disconnect(alias="default")
 
 
 def create_collection(collection_name: str = "documents") -> Collection:
+    """获取或创建指定名称的集合，包含稠密（HNSW）和稀疏（SPARSE_INVERTED_INDEX）两个向量索引。"""
     if utility.has_collection(collection_name):
         return Collection(collection_name)
 

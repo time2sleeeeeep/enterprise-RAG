@@ -1,3 +1,5 @@
+# MySQL 客户端：定义 ORM 模型（Document、ChatHistory），初始化数据库表，提供会话依赖注入。
+
 from sqlalchemy import create_engine, Column, String, Integer, DateTime, Text
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from datetime import datetime, timezone
@@ -34,10 +36,12 @@ class ChatHistory(Base):
 
 
 def init_db():
+    """根据 ORM 模型定义在数据库中创建所有表（已存在则跳过）。"""
     Base.metadata.create_all(bind=engine)
 
 
 def get_db():
+    """FastAPI 依赖注入生成器：每次请求创建新会话，请求结束后自动关闭。"""
     db = SessionLocal()
     try:
         yield db

@@ -1,3 +1,6 @@
+# 答案缓存模块：基于 Redis 的双层缓存，先做精确哈希匹配，未命中时再做语义相似度匹配。
+# 相似度阈值 0.95，缓存 TTL 3600 秒。
+
 import hashlib
 import json
 
@@ -13,10 +16,12 @@ SIMILARITY_THRESHOLD = 0.95
 
 
 def _hash_query(query: str) -> str:
+    """对查询字符串做 MD5 哈希，用作 Redis key 的唯一标识。"""
     return hashlib.md5(query.encode()).hexdigest()
 
 
 async def get_cached_answer(query: str) -> dict | None:
+    """查询缓存：先精确哈希匹配，未命中再遍历语义向量做余弦相似度匹配（阈值 0.95）。"""
     redis = await get_redis()
     if redis is None:
         return None
@@ -51,6 +56,7 @@ async def get_cached_answer(query: str) -> dict | None:
 
 
 async def set_cached_answer(query: str, result: dict) -> None:
+    """写入缓存：同时存储精确哈希键和嵌入向量键，TTL 均为 3600 秒。"""
     redis = await get_redis()
     if redis is None:
         return

@@ -1,3 +1,6 @@
+# FastAPI 应用入口：初始化服务、注册路由、配置 CORS 和全局异常处理。
+# 启动时连接 MySQL/Milvus，关闭时断开连接并清理 Redis 连接池。
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -13,6 +16,7 @@ from src.db.redis_client import close_redis
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """应用生命周期管理：启动时初始化 DB 和 Milvus 连接，关闭时释放资源。"""
     logger.info("Starting Enterprise RAG service...")
     init_db()
     connect_milvus()
@@ -40,6 +44,7 @@ app.add_middleware(
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    """捕获所有未处理异常，统一返回 500 JSON 响应。"""
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
@@ -49,6 +54,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.get("/health")
 async def health_check():
+    """健康检查接口，返回服务状态。"""
     return {"status": "healthy", "service": "enterprise-rag"}
 
 

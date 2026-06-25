@@ -1,3 +1,5 @@
+# 评估数据集模块：定义 EvalSample 数据类，提供 JSON 格式评估集的加载和保存工具函数。
+
 import json
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -13,6 +15,7 @@ class EvalSample:
 
 
 def load_eval_dataset(path: str) -> list[EvalSample]:
+    """从 JSON 文件加载评估样本列表，文件不存在时抛出 FileNotFoundError。"""
     file_path = Path(path)
     if not file_path.exists():
         raise FileNotFoundError(f"Dataset not found: {path}")
@@ -31,6 +34,7 @@ def load_eval_dataset(path: str) -> list[EvalSample]:
 
 
 def save_eval_dataset(samples: list[EvalSample], path: str) -> None:
+    """将评估样本列表序列化为 JSON 文件，编码 Unicode 字符。"""
     data = []
     for s in samples:
         data.append({

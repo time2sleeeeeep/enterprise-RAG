@@ -1,3 +1,6 @@
+# 答案生成模块：调用 DeepSeek LLM，将检索到的文档片段格式化为上下文后生成回答。
+# 要求模型仅基于参考资料作答并标注来源。
+
 from openai import OpenAI
 from loguru import logger
 
@@ -7,6 +10,7 @@ _client: OpenAI | None = None
 
 
 def _get_client() -> OpenAI:
+    """获取 DeepSeek OpenAI 兼容客户端单例。"""
     global _client
     if _client is None:
         _client = OpenAI(
@@ -33,6 +37,7 @@ CONTEXT_TEMPLATE = """参考资料：
 
 
 def format_context(documents: list[dict]) -> str:
+    """将文档列表格式化为带编号和来源标注的参考资料文本块。"""
     parts = []
     for i, doc in enumerate(documents, 1):
         source_info = f"[{doc['source']}"
@@ -49,6 +54,7 @@ def generate_answer(
     temperature: float = 0.3,
     max_tokens: int = 1024,
 ) -> dict:
+    """调用 LLM 生成回答，无文档时返回固定提示；有文档时拼接上下文后调用 DeepSeek。"""
     if not documents:
         return {
             "answer": "抱歉，未找到相关参考资料来回答您的问题。",

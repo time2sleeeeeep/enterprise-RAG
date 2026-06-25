@@ -1,3 +1,6 @@
+# 评估运行器：支持单次评估（run_single_eval）和多配置消融实验（run_ablation_study）。
+# 预置六种消融配置（有无重排序、有无混合检索、有无查询改写、不同 top_k），结果写入 JSON 文件。
+
 import json
 import time
 from dataclasses import dataclass, field, asdict
@@ -45,6 +48,7 @@ ABLATION_CONFIGS = [
 
 
 def _retrieve_for_sample(query: str, config: AblationConfig) -> list[dict]:
+    """根据消融配置执行检索：可选查询改写、混合/纯稠密检索、重排序。"""
     retriever = get_retriever()
 
     if config.use_query_rewrite:
@@ -76,6 +80,7 @@ def _retrieve_for_sample(query: str, config: AblationConfig) -> list[dict]:
 
 
 def run_single_eval(samples: list[EvalSample], config: AblationConfig) -> EvalResult:
+    """对给定样本集运行一次完整评估，逐条检索、生成、打分，汇总各指标均值和延迟。"""
     result = EvalResult(config_name=config.name)
     all_scores: dict[str, list[float]] = {name: [] for name in METRIC_FUNCTIONS}
     start = time.time()
@@ -129,6 +134,7 @@ def run_ablation_study(
     output_dir: str = "eval_results",
     configs: list[AblationConfig] | None = None,
 ) -> dict[str, EvalResult]:
+    """遍历所有消融配置运行评估，将汇总和详细结果写入 JSON 文件后返回结果字典。"""
     samples = load_eval_dataset(dataset_path)
     logger.info(f"Loaded {len(samples)} evaluation samples")
 
@@ -170,6 +176,7 @@ def run_ablation_study(
 
 
 def print_comparison_table(results: dict[str, EvalResult]) -> str:
+    """将各消融配置的指标和平均延迟格式化为对齐的对比表格字符串并打印日志。"""
     metrics = list(next(iter(results.values())).metrics.keys())
     header = f"{'Config':<15}" + "".join(f"{m:<18}" for m in metrics) + f"{'Latency':<10}"
     lines = [header, "-" * len(header)]

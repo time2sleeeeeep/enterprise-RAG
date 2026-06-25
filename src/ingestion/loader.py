@@ -1,3 +1,6 @@
+# 文档加载模块：支持 PDF（fitz）、Markdown、DOCX 三种格式的文档加载。
+# PDF 页面添加 [PAGE N] 标记以便后续按页分块；统一返回 LoadedDocument 数据类。
+
 from pathlib import Path
 from dataclasses import dataclass, field
 
@@ -14,6 +17,7 @@ class LoadedDocument:
 
 
 def load_pdf(file_path: Path) -> LoadedDocument:
+    """使用 PyMuPDF 逐页提取文本，非空页加 [PAGE N] 标记后拼接为整体内容。"""
     doc = fitz.open(str(file_path))
     pages = []
     for page_num, page in enumerate(doc, start=1):
@@ -30,6 +34,7 @@ def load_pdf(file_path: Path) -> LoadedDocument:
 
 
 def load_markdown(file_path: Path) -> LoadedDocument:
+    """以 UTF-8 读取 Markdown 文件全文，无分页处理。"""
     content = file_path.read_text(encoding="utf-8")
     return LoadedDocument(
         content=content,
@@ -39,6 +44,7 @@ def load_markdown(file_path: Path) -> LoadedDocument:
 
 
 def load_docx(file_path: Path) -> LoadedDocument:
+    """使用 python-docx 提取非空段落，段落间以双换行分隔。"""
     doc = DocxDocument(str(file_path))
     paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
     return LoadedDocument(
@@ -57,6 +63,7 @@ LOADERS = {
 
 
 def load_document(file_path: Path) -> LoadedDocument:
+    """根据文件扩展名分发到对应加载器，不支持的格式抛出 ValueError。"""
     suffix = file_path.suffix.lower()
     loader = LOADERS.get(suffix)
     if loader is None:

@@ -1,3 +1,6 @@
+# 对话路由：提供 POST /chat 接口，实现完整的 RAG 问答流程。
+# 依次执行：查询缓存 -> 查询改写 -> 混合检索 -> 重排序 -> LLM 生成 -> 结果缓存 -> 写入聊天历史。
+
 import uuid
 import json
 
@@ -41,6 +44,7 @@ class ChatResponse(BaseModel):
 
 @router.post("/", response_model=ChatResponse)
 async def chat(request: ChatRequest, db: Session = Depends(get_db)):
+    """处理问答请求：查缓存 -> 改写查询 -> 混合检索 -> 重排序 -> LLM 生成 -> 缓存结果 -> 写历史。"""
     session_id = request.session_id or str(uuid.uuid4())[:16]
 
     if request.use_cache:

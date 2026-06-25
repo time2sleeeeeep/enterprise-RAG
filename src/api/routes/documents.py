@@ -1,3 +1,6 @@
+# 文档管理路由：提供文档上传（POST /upload）、列表查询（GET /）和删除（DELETE /{doc_id}）接口。
+# 上传时将文件写入临时目录后触发摄取流水线，删除时同步清理 Milvus 中的向量数据。
+
 import shutil
 import tempfile
 from pathlib import Path
@@ -33,6 +36,7 @@ class IngestResponse(BaseModel):
 
 @router.post("/upload", response_model=IngestResponse)
 async def upload_document(file: UploadFile = File(...)):
+    """接收上传文件，写入临时目录后触发摄取流水线，完成后删除临时文件。"""
     suffix = Path(file.filename).suffix.lower()
     if suffix not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -64,6 +68,7 @@ async def upload_document(file: UploadFile = File(...)):
 
 @router.get("/", response_model=list[DocumentInfo])
 def list_documents(db: Session = Depends(get_db)):
+    """按创建时间倒序返回所有已摄取文档的元信息列表。"""
     docs = db.query(Document).order_by(Document.created_at.desc()).all()
     return [
         DocumentInfo(
@@ -78,6 +83,7 @@ def list_documents(db: Session = Depends(get_db)):
 
 @router.delete("/{doc_id}")
 def delete_document(doc_id: str, db: Session = Depends(get_db)):
+    """删除指定文档：同步从 Milvus 删除向量数据，再从 MySQL 删除元数据记录。"""
     doc = db.query(Document).filter(Document.id == doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")

@@ -1,7 +1,10 @@
+# 文本解析模块：提供文本清洗（去除多余空行/空格）和 [PAGE N] 页面标记提取两个工具函数。
+
 import re
 
 
 def clean_text(text: str) -> str:
+    """清洗文本：合并连续空行、压缩水平空白、去除行首行尾空格。"""
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"(\n )+", "\n", text)

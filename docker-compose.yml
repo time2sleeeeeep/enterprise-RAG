@@ -85,6 +85,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: rag-redis
+    command: redis-server --maxmemory ${REDIS_MAX_MEMORY:-512mb} --maxmemory-policy ${REDIS_MAX_MEMORY_POLICY:-allkeys-lru}
     ports:
       - "6379:6379"
     volumes:

@@ -1,3 +1,6 @@
+# 文档摄取流水线：将原始文档端到端写入知识库。
+# 流程：加载文件 -> 页面提取 -> 文本清洗 -> 分块 -> 嵌入编码 -> 写入 Milvus -> 写入 MySQL。
+
 import hashlib
 from pathlib import Path
 
@@ -13,6 +16,7 @@ from src.ingestion.parser import clean_text, extract_page_markers
 
 
 def generate_chunk_id(doc_id: str, chunk_index: int) -> str:
+    """根据文档 ID 和分块序号生成唯一的 MD5 哈希 chunk ID。"""
     raw = f"{doc_id}_{chunk_index}"
     return hashlib.md5(raw.encode()).hexdigest()
 
@@ -23,6 +27,7 @@ def ingest_document(
     chunk_size: int = 512,
     chunk_overlap: int = 64,
 ) -> dict:
+    """完整摄取流水线：加载 -> 分页 -> 清洗 -> 分块 -> 嵌入 -> 写 Milvus -> 写 MySQL，返回摄取元信息。"""
     path = Path(file_path)
     if not path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
