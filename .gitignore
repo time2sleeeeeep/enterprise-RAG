@@ -37,6 +37,9 @@ env/
 .vscode/
 *.code-workspace
 
+# CodeWhale
+.codewhale/
+
 # Environment variables
 .env
 .env.local
@@ -98,6 +101,9 @@ $RECYCLE.BIN/
 
 # Redis dump
 dump.rdb
+
+# Runtime PID files
+.rag-app.pid
 
 # Docker volumes
 docker-data/

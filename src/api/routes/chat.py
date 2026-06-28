@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from loguru import logger
 
 from src.db.mysql_client import get_db, ChatHistory
+from src.config import settings
 from src.core.retriever import get_retriever
 from src.core.reranker import get_reranker
 from src.core.generator import generate_answer
@@ -74,7 +75,25 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
     else:
         documents = documents[: request.top_k]
 
-    result = generate_answer(request.question, documents)
+    # 查询该 session 的历史对话，注入 LLM 上下文
+    history_messages: list[dict] = []
+    if request.session_id and settings.chat_history_max_turns > 0:
+        records = (
+            db.query(ChatHistory)
+            .filter(ChatHistory.session_id == request.session_id)
+            .order_by(ChatHistory.created_at.desc())
+            .limit(settings.chat_history_max_turns)
+            .all()
+        )
+        for r in reversed(records):
+            history_messages.append({"role": "user", "content": r.question})
+            history_messages.append({"role": "assistant", "content": r.answer})
+
+    result = generate_answer(
+        request.question,
+        documents,
+        history=history_messages or None,
+    )
 
     sources = [
         SourceDoc(

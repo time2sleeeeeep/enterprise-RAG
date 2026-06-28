@@ -1,6 +1,12 @@
 # 全局配置模块：通过 pydantic-settings 从 .env 文件加载所有服务配置，
 # 包括 DeepSeek API、Milvus、MySQL、Redis、嵌入模型、重排序模型及服务器参数。
 
+import os
+
+# 强制 HuggingFace 离线模式 — 模型权重已缓存至本地，跳过每次加载时的版本检查网络请求。
+# 必须在任何 huggingface_hub / FlagEmbedding 导入之前设置，否则环境变量不会被读取。
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+
 from pydantic_settings import BaseSettings
 from pydantic import Field
 
@@ -29,6 +35,8 @@ class Settings(BaseSettings):
     redis_port: int = Field(default=6379)
     redis_db: int = Field(default=0)
     redis_password: str = Field(default="")
+    redis_max_memory: str = Field(default="512mb")
+    redis_max_memory_policy: str = Field(default="allkeys-lru")
 
     # Embedding
     embedding_model_name: str = Field(default="BAAI/bge-m3")
@@ -38,6 +46,9 @@ class Settings(BaseSettings):
     # Reranker
     reranker_model_name: str = Field(default="BAAI/bge-reranker-v2-m3")
     reranker_device: str = Field(default="cuda")
+
+    # Chat
+    chat_history_max_turns: int = Field(default=5)
 
     # Retrieval
     dense_top_k: int = Field(default=20)

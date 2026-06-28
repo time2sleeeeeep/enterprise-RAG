@@ -34,6 +34,7 @@ services:
   milvus-standalone:
     image: milvusdb/milvus:v2.4.13
     container_name: milvus-standalone
+    command: ["milvus", "run", "standalone"]
     environment:
       ETCD_ENDPOINTS: milvus-etcd:2379
       MINIO_ADDRESS: milvus-minio:9000
@@ -75,7 +76,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
-      - "3306:3306"
+      - "3307:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -104,6 +105,7 @@ services:
       MILVUS_HOST: milvus-standalone
       MYSQL_HOST: mysql
       REDIS_HOST: redis
+      HF_HUB_OFFLINE: "1"
     ports:
       - "8000:8000"
     depends_on:
