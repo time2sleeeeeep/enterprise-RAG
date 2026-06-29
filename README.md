@@ -98,6 +98,17 @@ uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 
 ## API 接口
 
+所有接口的错误响应均使用统一格式 `{"detail": "错误描述", "message": null}`，各状态码含义如下：
+
+| 状态码 | 说明 |
+| :----- | :--- |
+| 400 | 请求参数不合法（文件类型不支持、数据集为空等） |
+| 404 | 资源不存在（文档、数据集等） |
+| 413 | 上传文件过大 |
+| 422 | 请求体校验失败（字段缺失或类型错误） |
+| 500 | 服务器内部错误（不泄露具体原因） |
+| 503 | 依赖服务不可用（Milvus、LLM 等） |
+
 ### 对话
 
 ```
@@ -107,7 +118,8 @@ Body: {
     "session_id": null,          // 可选，留空则自动创建新会话
     "top_k": 5,
     "use_reranker": true,
-    "use_cache": true
+    "use_cache": true,
+    "use_query_rewrite": true
 }
 
 // 多轮对话：将上一轮返回的 session_id 传入即可继续对话
@@ -136,7 +148,7 @@ POST /api/v1/eval/ablation  # 运行消融实验（6 种配置）
 ### 健康检查
 
 ```
-GET /health
+GET /health  →  {"status": "healthy", "service": "enterprise-rag"}
 ```
 
 ## 项目结构
@@ -146,10 +158,12 @@ enterprise-rag/
 ├── src/
 │   ├── main.py                 # FastAPI 应用 + 生命周期管理
 │   ├── config.py               # Pydantic Settings（.env 配置）
-│   ├── api/routes/
-│   │   ├── chat.py             # RAG 管线接口
-│   │   ├── documents.py        # 文档 CRUD + 摄入
-│   │   └── eval.py             # 评估与消融实验
+│   ├── api/
+│   │   ├── responses.py         # 通用响应模型（ErrorResponse 等）
+│   │   └── routes/
+│   │       ├── chat.py             # RAG 管线接口
+│   │       ├── documents.py        # 文档 CRUD + 摄入
+│   │       └── eval.py             # 评估与消融实验
 │   ├── core/
 │   │   ├── embeddings.py       # BGE-M3 单例（稠密+稀疏）
 │   │   ├── retriever.py        # 混合检索 + RRF 融合

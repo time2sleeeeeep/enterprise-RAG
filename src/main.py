@@ -4,10 +4,13 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from src.api.responses import ErrorResponse, HealthResponse
 from src.api.routes import chat, documents, eval
 from src.db.mysql_client import init_db
 from src.db.milvus_client import connect_milvus, disconnect_milvus
@@ -42,20 +45,62 @@ app.add_middleware(
 )
 
 
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    """捕获所有未处理异常，统一返回 500 JSON 响应。"""
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+# ---------------------------------------------------------------------------
+# 全局异常处理器
+# ---------------------------------------------------------------------------
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """统一格式化 HTTPException 响应，使 OpenAPI 可正确生成 ErrorResponse schema。"""
+    logger.warning(f"HTTP {exc.status_code}: {exc.detail} — {request.method} {request.url.path}")
     return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error", "message": str(exc)},
+        status_code=exc.status_code,
+        content=ErrorResponse(
+            detail=str(exc.detail),
+            message=None,
+        ).model_dump(),
     )
 
 
-@app.get("/health")
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """统一格式化请求校验错误，返回 422 和友好的错误详情。"""
+    logger.warning(f"Validation error on {request.method} {request.url.path}: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """捕获所有未处理的内部异常，返回 500 且不泄露内部错误细节。"""
+    logger.error(f"Unhandled exception on {request.method} {request.url.path}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content=ErrorResponse(
+            detail="Internal server error",
+            message=None,
+        ).model_dump(),
+    )
+
+
+# ---------------------------------------------------------------------------
+# 路由注册
+# ---------------------------------------------------------------------------
+
+
+@app.get(
+    "/health",
+    response_model=HealthResponse,
+    responses={
+        500: {"model": ErrorResponse, "description": "服务不可用"},
+    },
+)
 async def health_check():
     """健康检查接口，返回服务状态。"""
-    return {"status": "healthy", "service": "enterprise-rag"}
+    return HealthResponse(status="healthy", service="enterprise-rag")
 
 
 app.include_router(chat.router, prefix="/api/v1", tags=["Chat"])
