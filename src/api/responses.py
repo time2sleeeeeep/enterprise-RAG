@@ -49,6 +49,15 @@ class BulkImportItemResult(BaseModel):
     error: str | None = Field(None, description="失败时的错误信息（成功时为 null）")
 
 
+class BulkDeleteResponse(BaseModel):
+    """DELETE /documents 批量删除响应。"""
+
+    total_requested: int = Field(..., description="请求删除的文档 ID 数量")
+    deleted_count: int = Field(..., description="实际成功删除的文档数量")
+    not_found: list[str] = Field(default_factory=list, description="在数据库中未找到的 doc_id 列表")
+    message: str = Field(..., description="操作结果描述")
+
+
 class BulkImportResponse(BaseModel):
     """POST /documents/bulk-import 批量导入的响应格式。"""
 

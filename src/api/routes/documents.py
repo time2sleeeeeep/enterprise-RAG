@@ -9,11 +9,11 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, Form, UploadFile, HTTPException
 from pymilvus import Collection, utility
 from pymilvus.exceptions import MilvusException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from loguru import logger
 
-from src.api.responses import BulkImportItemResult, BulkImportResponse, DeleteResponse, ErrorResponse
+from src.api.responses import BulkDeleteResponse, BulkImportItemResult, BulkImportResponse, DeleteResponse, ErrorResponse
 from src.config import settings
 from src.db.mysql_client import get_db, Document
 from src.ingestion.bulk import (
@@ -46,6 +46,10 @@ class IngestResponse(BaseModel):
     filename: str
     chunk_count: int
     message: str
+
+
+class BulkDeleteRequest(BaseModel):
+    doc_ids: list[str] = Field(..., min_length=1, description="要删除的文档 ID 列表")
 
 
 @router.post(
@@ -257,4 +261,83 @@ def delete_document(doc_id: str, db: Session = Depends(get_db)):
     return DeleteResponse(
         message=f"Document '{doc.filename}' deleted",
         doc_id=doc_id,
+    )
+
+
+# Milvus `in` 表达式单次最大 ID 数量（避免表达式过长导致解析失败）
+_MILVUS_IN_BATCH_SIZE = 200
+
+
+@router.delete(
+    "/",
+    response_model=BulkDeleteResponse,
+    responses={
+        **_COMMON_ERRORS,
+        404: {"model": ErrorResponse, "description": "部分或全部文档不存在"},
+    },
+)
+def bulk_delete_documents(body: BulkDeleteRequest, db: Session = Depends(get_db)):
+    """批量删除文档：一次性清理 Milvus 向量和 MySQL 元数据，显著减少网络往返和磁盘刷新次数。"""
+    requested = body.doc_ids
+
+    # 1. 查询 MySQL 中实际存在的文档
+    existing_docs = db.query(Document).filter(Document.id.in_(requested)).all()
+    existing_ids = {doc.id for doc in existing_docs}
+    not_found = [doc_id for doc_id in requested if doc_id not in existing_ids]
+
+    if not existing_ids:
+        return BulkDeleteResponse(
+            total_requested=len(requested),
+            deleted_count=0,
+            not_found=not_found,
+            message="No requested documents found in database",
+        )
+
+    # 2. 从 Milvus 批量删除向量数据（一次 load + 分批 or 表达式 + 一次 flush）
+    collection_name = settings.milvus_collection
+    milvus_deleted = 0
+    milvus_error = None
+    if utility.has_collection(collection_name):
+        try:
+            collection = Collection(collection_name)
+            collection.load()
+            ids_list = list(existing_ids)
+            for i in range(0, len(ids_list), _MILVUS_IN_BATCH_SIZE):
+                batch = ids_list[i : i + _MILVUS_IN_BATCH_SIZE]
+                # 使用 or 连接多个 == 条件，Milvus 原生支持且兼容性最好
+                or_clause = " or ".join(f'doc_id == "{doc_id}"' for doc_id in batch)
+                result = collection.delete(expr=or_clause)
+                milvus_deleted += getattr(result, "delete_count", 0)
+            collection.flush()
+            logger.info(f"Bulk deleted {milvus_deleted} Milvus entries for {len(existing_ids)} docs")
+        except MilvusException as e:
+            logger.error(f"Milvus bulk delete failed: {e}")
+            milvus_error = str(e)
+
+    # 3. 从 MySQL 批量删除元数据（单事务）
+    try:
+        db.query(Document).filter(Document.id.in_(list(existing_ids))).delete(
+            synchronize_session=False
+        )
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logger.error(f"MySQL bulk delete failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to delete document metadata",
+        )
+
+    # 4. 构造响应（Milvus 异常不阻断 MySQL 删除，尽力而为）
+    message = f"Deleted {len(existing_ids)} documents"
+    if not_found:
+        message += f"; {len(not_found)} IDs not found"
+    if milvus_error:
+        message += f" (Milvus cleanup incomplete: {milvus_error[:120]})"
+
+    return BulkDeleteResponse(
+        total_requested=len(requested),
+        deleted_count=len(existing_ids),
+        not_found=not_found,
+        message=message,
     )

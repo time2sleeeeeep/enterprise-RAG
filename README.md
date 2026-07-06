@@ -31,7 +31,8 @@
 - **两级缓存**：Redis 语义缓存（精确 MD5 + 向量相似度阈值 0.95）
 - **查询改写**：基于 LLM 的查询扩展，提升召回率
 - **多轮对话**：基于 session_id 的对话历史注入，LLM 感知上下文（指代消解、追问）
-- **多格式文档摄入**：支持 PDF、Markdown、DOCX，智能分块
+- **多格式文档摄入**：支持 PDF、Markdown、DOCX，智能分块；支持文件夹上传和 zip 批量导入
+- **批量删除**：一键清除所有已入库文档的元数据与向量数据，消除重复的 Milvus load/flush 开销
 - **消融实验评估**：RAGAS 风格指标（忠实度、相关性、精确率、召回率、正确性）
 - **GPU 加速**：本地 BGE-M3 和重排序模型基于 CUDA 推理
 
@@ -133,10 +134,31 @@ Body: {
 ### 文档管理
 
 ```
-POST   /api/v1/documents/upload    # 上传并摄入文档（PDF/MD/DOCX）
-GET    /api/v1/documents/          # 列出所有文档
-DELETE /api/v1/documents/{doc_id}  # 删除文档及其向量数据
+POST   /api/v1/documents/upload       # 上传并摄入单个文档（PDF/MD/DOCX）
+POST   /api/v1/documents/bulk-import  # 批量导入（多文件/文件夹/zip压缩包）
+GET    /api/v1/documents/             # 列出所有文档
+DELETE /api/v1/documents/{doc_id}     # 删除单个文档及其向量数据
+DELETE /api/v1/documents/             # 批量删除文档（一次性清理向量和元数据）
 ```
+
+**批量删除** `DELETE /api/v1/documents/`：
+
+接受 JSON 请求体 `{"doc_ids": ["id1", "id2", ...]}`，在单次请求中完成所有文档的 Milvus 向量清理（一次 load + 分批 or 表达式 + 一次 flush）和 MySQL 元数据清理（单事务），相比逐个删除可减少 N-1 次 Milvus collection load/flush 和 N-1 次数据库事务。
+
+```json
+// 请求
+{"doc_ids": ["abc123", "def456", "ghi789"]}
+
+// 响应
+{
+    "total_requested": 3,
+    "deleted_count": 3,
+    "not_found": [],
+    "message": "Deleted 3 documents"
+}
+```
+
+`not_found` 字段列出在数据库中不存在的 ID；即使部分 ID 不存在，存在的仍会被删除。
 
 ### 评估
 
