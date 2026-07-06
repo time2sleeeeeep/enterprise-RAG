@@ -115,5 +115,5 @@ def ingest_document(
         "doc_id": doc_id,
         "filename": path.name,
         "chunk_count": len(all_chunks),
-        "strategy": strategy.value,
+        "strategy": strategy.value if hasattr(strategy, "value") else strategy,
     }

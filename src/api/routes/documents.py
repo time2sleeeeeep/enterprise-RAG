@@ -101,45 +101,56 @@ async def upload_document(file: UploadFile = File(...)):
     },
 )
 async def bulk_import_documents(
-    files: list[UploadFile] = File(..., description="支持多文件上传或单个 zip 压缩包"),
+    files: list[UploadFile] = File(..., description="多文件 / 文件夹 / zip 压缩包"),
     max_concurrency: int = Form(4, ge=1, le=8, description="并发处理上限（1-8）"),
 ):
-    """批量导入文档。
+    """批量导入文档，**支持直接上传整个文件夹**。
 
     上传方式：
-    - **多文件上传** — 直接上传多个受支持的文件（.pdf / .md / .docx）
-    - **zip 压缩包** — 上传一个 .zip 文件，服务端解压后递归提取其中的支持文件
+    - **文件夹上传** — 浏览器 `<input webkitdirectory>` 或客户端将文件夹内
+      所有文件打包为 multipart 请求，`filename` 携带相对路径（如
+      `docs/chapter1/report.pdf`），服务端自动重建目录结构。
+    - **多文件上传** — 同时选择多个受支持的文件（.pdf / .md / .docx）。
+    - **zip 压缩包** — 上传一个 .zip 文件，服务端解压后递归提取支持文件。
 
-    每个文件根据扩展名自动匹配处理配置（chunk 大小、重叠量等）。处理的
+    每个文件根据扩展名自动匹配处理配置（chunk 大小、重叠量等）。所有
     文件写入临时目录，完成后清理。
     """
     tmp_dir = Path(tempfile.mkdtemp())
     collected: list[Path] = []
     skipped: list[BulkImportItemResult] = []
 
+    def _safe_relative(raw: str) -> Path:
+        """将上传的 filename 转为安全的相对路径，防止路径穿越攻击。"""
+        # 标准化路径分隔符，剔除绝对路径前缀和 `..` 穿越
+        normalized = raw.replace("\\", "/").lstrip("/")
+        parts = [p for p in normalized.split("/") if p and p != ".."]
+        if not parts:
+            return Path("untitled")
+        return Path(*parts)
+
     try:
         # 1. 保存所有上传文件到临时目录，区分 zip 与普通文件
         for upload in files:
-            filename = upload.filename or "untitled"
-            suffix = Path(filename).suffix.lower()
+            raw_filename = upload.filename or "untitled"
+            suffix = Path(raw_filename).suffix.lower()
 
             # zip 压缩包 → 解压后收集
             if suffix in ALLOWED_ARCHIVE_EXTENSIONS:
                 content = await upload.read()
-                zip_tmp = tmp_dir / filename
+                zip_tmp = tmp_dir / Path(raw_filename).name
                 zip_tmp.write_bytes(content)
-                extract_dir = tmp_dir / f"_extracted_{Path(filename).stem}"
+                extract_dir = tmp_dir / f"_extracted_{Path(raw_filename).stem}"
                 extract_dir.mkdir(exist_ok=True)
                 extract_zip(zip_tmp, extract_dir)
                 for fp in collect_files(extract_dir):
                     collected.append(fp)
-                # TODO: 未来可在此处依据 zip 内文件结构进一步分类路由
                 continue
 
-            # 普通文件 → 直接保存
+            # 不支持的类型 → 跳过
             if suffix not in ALLOWED_EXTENSIONS:
                 skipped.append(BulkImportItemResult(
-                    filename=filename,
+                    filename=raw_filename,
                     status="skipped",
                     doc_id=None,
                     chunk_count=None,
@@ -147,8 +158,11 @@ async def bulk_import_documents(
                 ))
                 continue
 
+            # 普通文件 → 写入临时目录（保留相对路径结构）
             content = await upload.read()
-            tmp_path = tmp_dir / filename
+            rel_path = _safe_relative(raw_filename)
+            tmp_path = tmp_dir / rel_path
+            tmp_path.parent.mkdir(parents=True, exist_ok=True)
             tmp_path.write_bytes(content)
             collected.append(tmp_path)
 

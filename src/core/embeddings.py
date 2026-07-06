@@ -1,6 +1,8 @@
 # 嵌入模型模块：封装 BGE-M3 模型（单例），同时输出稠密向量和稀疏词权重。
 # 供检索器和缓存模块调用。
 
+import threading
+
 import torch
 import numpy as np
 from FlagEmbedding import BGEM3FlagModel
@@ -13,6 +15,7 @@ class BGEm3Embedder:
     """BGE-M3 嵌入模型单例封装，首次实例化时加载模型，后续复用。"""
 
     _instance = None
+    _lock = threading.Lock()
 
     def __new__(cls):
         """确保全局只初始化一次模型实例（单例模式）。"""
@@ -25,14 +28,17 @@ class BGEm3Embedder:
         """加载 BGE-M3 模型到指定设备，已初始化则直接返回。"""
         if self._initialized:
             return
-        logger.info(f"Loading bge-m3 model on {settings.embedding_device}...")
-        self.model = BGEM3FlagModel(
-            settings.embedding_model_name,
-            use_fp16=(settings.embedding_device == "cuda"),
-            device=settings.embedding_device,
-        )
-        self._initialized = True
-        logger.info("bge-m3 model loaded successfully")
+        with BGEm3Embedder._lock:
+            if self._initialized:
+                return
+            logger.info(f"Loading bge-m3 model on {settings.embedding_device}...")
+            self.model = BGEM3FlagModel(
+                settings.embedding_model_name,
+                use_fp16=(settings.embedding_device == "cuda"),
+                device=settings.embedding_device,
+            )
+            self._initialized = True
+            logger.info("bge-m3 model loaded successfully")
 
     def encode(
         self,
