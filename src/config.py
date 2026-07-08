@@ -3,10 +3,6 @@
 
 import os
 
-# 强制 HuggingFace 离线模式 — 模型权重已缓存至本地，跳过每次加载时的版本检查网络请求。
-# 必须在任何 huggingface_hub / FlagEmbedding 导入之前设置，否则环境变量不会被读取。
-os.environ.setdefault("HF_HUB_OFFLINE", "1")
-
 from pydantic_settings import BaseSettings
 from pydantic import Field
 
@@ -56,6 +52,13 @@ class Settings(BaseSettings):
     rerank_top_k: int = Field(default=5)
     rrf_k: int = Field(default=60)
 
+    # Evaluation
+    eval_qa_generation_model: str = Field(default="")
+    eval_judge_model: str = Field(default="")
+    eval_default_runs: int = Field(default=3)
+    eval_output_dir: str = Field(default="eval_results")
+    eval_claim_batch_verify: bool = Field(default=True)
+
     # Server
     server_host: str = Field(default="0.0.0.0")
     server_port: int = Field(default=8000)
@@ -75,7 +78,7 @@ class Settings(BaseSettings):
             return f"redis://:{self.redis_password}@{self.redis_host}:{self.redis_port}/{self.redis_db}"
         return f"redis://{self.redis_host}:{self.redis_port}/{self.redis_db}"
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()

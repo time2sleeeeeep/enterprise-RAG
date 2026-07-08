@@ -93,7 +93,7 @@ app_start() {
     info "启动 FastAPI 应用..."
     mkdir -p "$(dirname "$LOG_FILE")"
     cd "$PROJECT_DIR"
-    nohup "$VENV_PYTHON" -m src.main >> "$LOG_FILE" 2>&1 &
+    nohup "$VENV_PYTHON" -m src.main > "$LOG_FILE" 2>&1 &
     echo $! > "$PID_FILE"
 
     # 等待服务就绪

@@ -12,6 +12,15 @@ class EvalSample:
     contexts: list[str] = field(default_factory=list)
     answer: str = ""
     source_documents: list[dict] = field(default_factory=list)
+    # 新增字段（全部可选，保持向后兼容）
+    relevance_labels: dict[str, int] = field(default_factory=dict)
+    #  ^ chunk_id -> relevance: 0=不相关, 1=相关, 2=高度相关（合成数据的种子 chunk）
+    expected_sources: list[str] = field(default_factory=list)
+    #  ^ 期望回答引用的来源文件名列表
+    seed_chunk_id: str = ""
+    #  ^ 合成数据集中生成该 QA 的源 chunk id
+    difficulty: str = ""
+    #  ^ simple / medium / complex
 
 
 def load_eval_dataset(path: str) -> list[EvalSample]:
@@ -29,6 +38,10 @@ def load_eval_dataset(path: str) -> list[EvalSample]:
             question=item["question"],
             ground_truth=item["ground_truth"],
             contexts=item.get("contexts", []),
+            relevance_labels=item.get("relevance_labels", {}),
+            expected_sources=item.get("expected_sources", []),
+            seed_chunk_id=item.get("seed_chunk_id", ""),
+            difficulty=item.get("difficulty", ""),
         ))
     return samples
 
@@ -42,6 +55,10 @@ def save_eval_dataset(samples: list[EvalSample], path: str) -> None:
             "ground_truth": s.ground_truth,
             "contexts": s.contexts,
             "answer": s.answer,
+            "relevance_labels": s.relevance_labels,
+            "expected_sources": s.expected_sources,
+            "seed_chunk_id": s.seed_chunk_id,
+            "difficulty": s.difficulty,
         })
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)

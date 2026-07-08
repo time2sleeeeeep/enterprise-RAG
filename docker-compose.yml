@@ -34,12 +34,22 @@ services:
   milvus-standalone:
     image: milvusdb/milvus:v2.4.13
     container_name: milvus-standalone
-    command: ["milvus", "run", "standalone"]
+    command:
+      - sh
+      - -c
+      - |
+        sed -e "s/@@FLUSH_RATE_ENABLED@@/$$MILVUS_FLUSH_RATE_ENABLED/g" \
+            -e "s/@@FLUSH_RATE_COLLECTION_MAX@@/$$MILVUS_FLUSH_RATE_COLLECTION_MAX/g" \
+            /milvus/configs/milvus.yaml.template > /milvus/configs/milvus.yaml && \
+        exec milvus run standalone
     environment:
       ETCD_ENDPOINTS: milvus-etcd:2379
       MINIO_ADDRESS: milvus-minio:9000
+      MILVUS_FLUSH_RATE_ENABLED: ${MILVUS_FLUSH_RATE_ENABLED:-false}
+      MILVUS_FLUSH_RATE_COLLECTION_MAX: ${MILVUS_FLUSH_RATE_COLLECTION_MAX:--1}
     volumes:
       - milvus_data:/var/lib/milvus
+      - ./configs/milvus.yaml.template:/milvus/configs/milvus.yaml.template:ro
     ports:
       - "19530:19530"
       - "9091:9091"
