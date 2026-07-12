@@ -1,0 +1,282 @@
+[
+  {
+    "question": "在所提供的代码中，可取消的上下文是如何创建的？客户端连接使用的是哪个 Milvus 地址？",
+    "ground_truth": "该代码使用 `context.WithCancel(context.Background())` 创建了一个可取消的上下文，并将其赋值给变量 `ctx`，同时",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "fb5c70f7d84b9d76c518f8c016bf4976": 2
+    },
+    "expected_sources": [
+      "array_data_type.md"
+    ],
+    "seed_chunk_id": "fb5c70f7d84b9d76c518f8c016bf4976",
+    "difficulty": "medium"
+  },
+  {
+    "question": "如果我想在安装 kotaemon 的同时将默认向量存储从其他类型切换到 Milvus，我应该按照什么顺序执行哪些关键步骤？请详细说明每一步涉及的具体文件、命令或配置修改。",
+    "ground_truth": "根据上下文，首先应按照推荐的安装流程安装 kotaemon：在可选设置环境步骤中，使用 `conda create -n kotaemon python=3.10` 和 `conda activate kotaemon` 创建并激活环境，然后通过 `git clone https://github.com/Cinnamon/kotaemon` 克隆仓库，接着进入 kotaemon 目录并依次执行 `pip install -e \"libs/kotaemon[all]\"` 和 `pip install -e \"libs/ktem\"` 完成安装。安装完成后，为了将默认向量存储更改为 Milvus，需要修改 `flowsettings.py` 文件，将其中向量存储配置部分的 `\"__type__\"` 字段值改为 `\"kotaemon.storages.MilvusVectorStore\"`。最后，还需要设置相应的环境变量，但上下文中未给出具体变量名称和值，仅提到“设置环境变量”这一步骤。因此，完整的顺序是：安装 → 修改 flowsettings.py 中的向量存储类型 → 设置环境变量。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "7c9bfb223d4ddfb360b255e80ed24f0c": 2
+    },
+    "expected_sources": [
+      "kotaemon_with_milvus.md"
+    ],
+    "seed_chunk_id": "7c9bfb223d4ddfb360b255e80ed24f0c",
+    "difficulty": "complex"
+  },
+  {
+    "question": "根据所提供的上下文，安装 Milvus Operator 的推荐方法是什么？安装完成后应立即执行什么操作？",
+    "ground_truth": "该上下文推荐使用 Helm 安装 Milvus Operator 以简化配置流程。首先，通过运行以下命令添加 Helm 仓库：  \n``` \nhelm repo add milvus-operator https://zilliztech.github.io/milvus-operator  \nhelm repo update milvus-operator  \n```  \n然后在命名空间 `milvus-operator` 中安装 Operator：  \n```  \nhelm -n milvus-operator upgrade --install --create-namespace milvus-operator milvus-operator/milvus-operator  \n```  \nMilvus Operator 安装完成后，下一步应立即按照 Milvus 文档网站上的其余指导部署 Milvus，如“步骤4：部署 Milvus”所述。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "2eca248be848466c0ac59ea28772cf3e": 2
+    },
+    "expected_sources": [
+      "openshift.md"
+    ],
+    "seed_chunk_id": "2eca248be848466c0ac59ea28772cf3e",
+    "difficulty": "medium"
+  },
+  {
+    "question": "在提供的查询中，过滤器 `“ratings[0] > 4”` 是否会考虑 tags 字段或 ratings 的第一个元素之外的任何其他字段？请结合代码和输出进行解释。",
+    "ground_truth": "该过滤器仅应用于 “ratings” 数组字段，具体针对其第一个元素（索引 0）。条件 `“ratings[0] > 4”` 会选择第一个评分严格大于 4 的文档。在输出中，返回的两条记录的 pk=",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "aa16b1a1a7f1f28b5c9664d5855d80f0": 2
+    },
+    "expected_sources": [
+      "array_data_type.md"
+    ],
+    "seed_chunk_id": "aa16b1a1a7f1f28b5c9664d5855d80f0",
+    "difficulty": "complex"
+  },
+  {
+    "question": "如何检查 Milvus 元数据迁移的状态？",
+    "ground_truth": "运行命令 `kubectl describe milvus release-name` 来检查元数据迁移的状态。输出中显示 `ready` 状态即表示迁移成功。或者，也可以运行 `kubectl get pod` 检查所有 pods，如果所有 pods 都是 ready 状态，则元数据迁移成功。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "86c022953d0aba378933cdfdd71fc7b5": 2
+    },
+    "expected_sources": [
+      "upgrade_milvus_standalone-operator.md"
+    ],
+    "seed_chunk_id": "86c022953d0aba378933cdfdd71fc7b5",
+    "difficulty": "simple"
+  },
+  {
+    "question": "在上下文的示例中，'embedding' 和 'varchar_field1' 字段使用了什么索引类型？",
+    "ground_truth": "在该示例中，向量字段 'embedding' 和标量字段 'varchar_field1' 均使用了 AUTOINDEX 索引类型，该类型允许 Milvus 根据数据类型自动选择最合适的索引。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "e6482f9ad460c0381bc320e89f27aac0": 2
+    },
+    "expected_sources": [
+      "string.md"
+    ],
+    "seed_chunk_id": "e6482f9ad460c0381bc320e89f27aac0",
+    "difficulty": "simple"
+  },
+  {
+    "question": "根据上下文，哪些索引类型同时支持“非常高速的查询”和“需要尽可能高的召回率”？它们各自的内存资源要求是什么？",
+    "ground_truth": "根据提供的上下文，同时满足“非常高速的查询”和“需要尽可能高的召回率”的索引类型有两种：HNSW 和 SCANN。其中，HNSW 是“基于图的索引”，需要大内存资源；SCANN 是“基于量化的索引”，同样需要大内存资源。注意，IVF_FLAT 虽然也要求“需要尽可能高的召回率”，但其查询速度描述为“高速查询”而非“非常高速”，因此不包含在内。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "c021e12748c9917e0592d2352135e4f5": 2
+    },
+    "expected_sources": [
+      "reference.md"
+    ],
+    "seed_chunk_id": "c021e12748c9917e0592d2352135e4f5",
+    "difficulty": "medium"
+  },
+  {
+    "question": "ID为8的项目的颜色是什么？",
+    "ground_truth": "ID为8的项目的颜色是\"white_9381\"。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "f9cf74f2efeab609dfc3034b100697eb": 2
+    },
+    "expected_sources": [
+      "enable-dynamic-field.md"
+    ],
+    "seed_chunk_id": "f9cf74f2efeab609dfc3034b100697eb",
+    "difficulty": "simple"
+  },
+  {
+    "question": "在部署Milvus集群之前，如何确认Milvus Operator已经成功安装并处于可运行状态？请列出具体的操作命令和判断依据。",
+    "ground_truth": "首先，需要检查Milvus Operator的pod是否在运行。使用命令 `kubectl get pods -n milvus-operator` 查看。如果pod的状态为 `Running`（例如示例中显示的 `milvus-operator-5fd77b87dc-msrk4` 的STATUS为 `Running`），则说明Milvus Operator已成功安装并正在运行。只有在这个前置条件满足后，才能执行下一步部署Milvus集群的命令：`kubectl apply -f https://raw.githubusercontent.com/zilliztech/milvus-operator/main/config/samples/milvus_cluster_default.yaml`。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "f168b6a2628215cffb2ed43d2a1263e7": 2
+    },
+    "expected_sources": [
+      "install_cluster-milvusoperator.md"
+    ],
+    "seed_chunk_id": "f168b6a2628215cffb2ed43d2a1263e7",
+    "difficulty": "complex"
+  },
+  {
+    "question": "示例中向集合模式添加了哪些字段？",
+    "ground_truth": "该模式包含一个类型为Int64的\"id\"字段，它是主键且不自动生成ID（`autoID: false`），以及一个类型为FloatVector、维度为5的\"vector\"字段。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "dd0fa736697b46c4a18d8fc8513e7945": 2
+    },
+    "expected_sources": [
+      "index-vector-fields.md"
+    ],
+    "seed_chunk_id": "dd0fa736697b46c4a18d8fc8513e7945",
+    "difficulty": "simple"
+  },
+  {
+    "question": "在提供的搜索代码中，请求的topK值是多少？实际返回了多少个结果？这些结果的主键和分数是什么？",
+    "ground_truth": "搜索请求将topK设置为3，意味着期望最多返回三个结果。然而，输出只打印了两个搜索结果。第一个结果的主键(pk)为457270974427187729，分数为0.63。第二个结果的主键为457270974427187728，分数为0.1。被搜索的集合是\"my_collection\"，ANN字段是\"sparse_vector\"。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "2fc616b24c6c6853a28d264d90abd258": 2
+    },
+    "expected_sources": [
+      "sparse_vector.md"
+    ],
+    "seed_chunk_id": "2fc616b24c6c6853a28d264d90abd258",
+    "difficulty": "medium"
+  },
+  {
+    "question": "如何配置一个使用精确模式且禁用HMM的Jieba分词器？文档中Java、Go和RESTful示例使用的参数值是什么？",
+    "ground_truth": "在提供的上下文中，Jieba分词器在不同语言中使用了相同的四个参数进行配置：  \n- `\"type\"`设置为`\"jieba\"`  \n- `\"dict\"`以列表形式提供，包含单个字符串`\"结巴分词器\"`  \n- `\"mode\"`设置为`\"exact\"`  \n- `\"hmm\"`设置为`false`  \n\nJava示例使用`HashMap<String, Object>`，通过`analyzerParams.put(...)`填充这些键值对。Go示例使用包含相同条目的`map[string]any`字面量。对于RESTful访问，上下文仅以`# restful`作为标题，但未提供显式代码；不过，REST API请求体中隐含了相同的参数结构。文档还提到使用`run_analyzer`来验证配置。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "44b6123d5e2fc3473add6189b059ae74": 2
+    },
+    "expected_sources": [
+      "jieba-tokenizer.md"
+    ],
+    "seed_chunk_id": "44b6123d5e2fc3473add6189b059ae74",
+    "difficulty": "complex"
+  },
+  {
+    "question": "Milvus 中的动态模式是什么？",
+    "ground_truth": "Milvus 中的动态模式允许你在不修改现有模式的情况下，向集合插入带有新字段的实体。这意味着你可以在不知道集合完整模式的情况下插入数据，并且可以包含尚未定义的字段。通过在创建集合时启用动态字段选项，你可以启用此功能。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "2dcc0f8c3fb68b53683d6334bae44c8d": 2
+    },
+    "expected_sources": [
+      "glossary.md"
+    ],
+    "seed_chunk_id": "2dcc0f8c3fb68b53683d6334bae44c8d",
+    "difficulty": "simple"
+  },
+  {
+    "question": "根据示例，在应用带有词干分析器过滤器的分析器配置之前，使用什么方法来验证其行为，该配置的具体参数是什么？",
+    "ground_truth": "所使用的方法是 `run_analyzer`。分析器配置包括一个设置为 `\"standard\"` 的 `tokenizer`，以及一个类型为 `\"stemmer\"` 的 `filter`，其中 `\"language\"` 参数设置为 `\"english\"`，以便对英文文本启用词干提取。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "a9a0bced54f377b70b1e38d783563bf4": 2
+    },
+    "expected_sources": [
+      "stemmer-filter.md"
+    ],
+    "seed_chunk_id": "a9a0bced54f377b70b1e38d783563bf4",
+    "difficulty": "medium"
+  },
+  {
+    "question": "querycoord.autobalance 的值是多少？",
+    "ground_truth": "querycoord.autobalance 的值为 true。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "81de003cfbf68caa159827b2fc4059b9": 2
+    },
+    "expected_sources": [
+      "birdwatcher_usage_guides.md"
+    ],
+    "seed_chunk_id": "81de003cfbf68caa159827b2fc4059b9",
+    "difficulty": "simple"
+  },
+  {
+    "question": "我需要运行哪些命令来下载 FastGPT 配置文件以及相应的 Docker Compose 文件？可用的两个数据库版本选项是什么？",
+    "ground_truth": "首先，确保已安装 Docker Compose。然后运行以下命令：\n- `mkdir fastgpt` 和 `cd fastgpt` 用于创建并进入目录。\n- 使用 `curl -O https://raw.githubusercontent.com/labring/FastGPT/main/projects/app/data/config.json` 下载配置文件。\n- 对于 Docker Compose 文件，你有两个选项：\n  - **Milvus 版本**：`curl -o docker-compose.yml https://raw.githubusercontent.com/labring/FastGPT/main/files/docker/docker-compose-milvus.yml`\n  - **Zilliz 版本**（在示例中被注释掉）：`curl -o docker-compose.yml https://raw.githubusercontent.com/labring/FastGPT/main/files/docker/docker-compose-zilliz.yml`\n根据所选数据库后端，只需下载两个 Docker Compose 文件中的一个。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "cb7d772a35888eac56a15e1cb20a5928": 2
+    },
+    "expected_sources": [
+      "integrate_with_fastgpt.md"
+    ],
+    "seed_chunk_id": "cb7d772a35888eac56a15e1cb20a5928",
+    "difficulty": "medium"
+  },
+  {
+    "question": "创建带有本地SSD的GKE节点池的命令是什么？在Azure VMSS中附加本地NVMe磁盘的要求是什么？",
+    "ground_truth": "要创建带有本地SSD的GKE节点池，请使用以下命令：\n```\ngcloud container node-pools create ${POOL_NAME} \\ --cluster=${CLUSTER_NAME} \\ --ephemeral-storage-local-ssd count=${NUMBER_OF_DISKS} \\ --machine-type=${MACHINE_TYPE}\n```\n详情请参阅《在GKE上配置本地SSD存储》。对于Azure，要将本地NVMe磁盘附加到虚拟机规模集（VMSS），需要向VM实例传递自定义数据。提供的上下文指出，给出了如何将NVMe磁盘附加到VMSS中VM实例的示例，但提供的文本中未包含实际示例或进一步要求。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "9e01fc51a206adee3d63c77adb2cc464": 2
+    },
+    "expected_sources": [
+      "configure-querynode-localdisk.md"
+    ],
+    "seed_chunk_id": "9e01fc51a206adee3d63c77adb2cc464",
+    "difficulty": "medium"
+  },
+  {
+    "question": "艾伦·图灵在1950年发表了哪篇论文？他提出了什么概念作为智能的评判标准？",
+    "ground_truth": "1950年，艾伦·图灵发表了他的开创性论文《计算机器与智能》，其中提出将图灵测试作为智能的评判标准。这篇论文被认为是人工智能哲学与发展的基础性概念。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "6512a01f2d14a35944141824a06051da": 2
+    },
+    "expected_sources": [
+      "rerankers-jina.md"
+    ],
+    "seed_chunk_id": "6512a01f2d14a35944141824a06051da",
+    "difficulty": "medium"
+  },
+  {
+    "question": "查询中使用什么筛选条件和输出字段来获取列出的结果？结果实体是什么？",
+    "ground_truth": "查询使用筛选条件 `status == \"active\"`，并指定输出字段为 `[\"id\", \"age\", \"status\"]`。查询得到的结果实体是两个 `QueryResp.QueryResult` 对象：一个为 `id=2, age=18, status=active`，另一个为 `id=3, age=25, status=active`。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "3e471505d15eb1744411f1bdd56ecf0d": 2
+    },
+    "expected_sources": [
+      "nullable-and-default.md"
+    ],
+    "seed_chunk_id": "3e471505d15eb1744411f1bdd56ecf0d",
+    "difficulty": "medium"
+  },
+  {
+    "question": "将Milvus-CDC服务器编译为二进制文件并启动的步骤是什么？",
+    "ground_truth": "要将Milvus-CDC服务器编译为二进制文件，首先保存cdc.yaml文件，然后进入milvus-cdc目录并运行命令 `make build`。编译完成后，确保目录结构中包含milvus-cdc二进制文件以及一个包含cdc.yaml文件的configs文件夹。然后，要启动服务器，进入包含milvus-cdc二进制文件和configs目录（configs/cdc.yaml配置文件用于CDC和源Milvus配置）的目录，并运行命令 `./milvus-cdc server`。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "db9660d85f3913cd1486a1e317b09856": 2
+    },
+    "expected_sources": [
+      "deploy-cdc-server.md"
+    ],
+    "seed_chunk_id": "db9660d85f3913cd1486a1e317b09856",
+    "difficulty": "medium"
+  }
+]

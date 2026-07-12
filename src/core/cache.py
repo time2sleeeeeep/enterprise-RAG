@@ -7,6 +7,7 @@ import json
 import numpy as np
 from loguru import logger
 
+from src.config import settings
 from src.core.embeddings import get_embedder
 from src.db.redis_client import get_redis
 
@@ -21,7 +22,7 @@ def _hash_query(query: str) -> str:
 
 
 async def get_cached_answer(query: str) -> dict | None:
-    """查询缓存：先精确哈希匹配，未命中再遍历语义向量做余弦相似度匹配（阈值 0.95）。"""
+    """查询缓存：先精确哈希匹配，未命中再 SCAN 语义向量做余弦相似度匹配（阈值 0.95）。"""
     redis = await get_redis()
     if redis is None:
         return None
@@ -35,11 +36,12 @@ async def get_cached_answer(query: str) -> dict | None:
     embedder = get_embedder()
     query_emb = embedder.encode_query(query)["dense"]
 
-    keys = await redis.keys("rag:cache_emb:*")
-    if not keys:
-        return None
-
-    for key in keys[:100]:
+    # 用 SCAN（非阻塞）替代 KEYS，按 semantic_cache_scan_limit 限制比对条数
+    scanned = 0
+    async for key in redis.scan_iter(match="rag:cache_emb:*", count=200):
+        if scanned >= settings.semantic_cache_scan_limit:
+            break
+        scanned += 1
         raw = await redis.get(key)
         if raw is None:
             continue

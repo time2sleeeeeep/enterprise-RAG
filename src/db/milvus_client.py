@@ -55,3 +55,17 @@ def create_collection(collection_name: str = "documents") -> Collection:
     )
 
     return collection
+
+
+def delete_doc_vectors(doc_id: str, collection_name: str | None = None) -> None:
+    """删除指定文档在 Milvus 中的所有向量（按 doc_id 表达式删除 + flush）。
+
+    供重新摄入前清理旧向量与单文档删除接口复用；集合不存在时静默返回。
+    """
+    collection_name = collection_name or settings.milvus_collection
+    if not utility.has_collection(collection_name):
+        return
+    collection = Collection(collection_name)
+    collection.load()
+    collection.delete(expr=f'doc_id == "{doc_id}"')
+    collection.flush()

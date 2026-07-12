@@ -11,7 +11,7 @@ from loguru import logger
 from src.core.retriever import get_retriever
 from src.core.reranker import get_reranker
 from src.core.generator import generate_answer
-from src.core.query_rewriter import rewrite_query
+from src.core.query_rewriter import expand_query, rewrite_query
 from src.evaluation.dataset import EvalSample, load_eval_dataset
 from src.evaluation.metrics import METRIC_FUNCTIONS
 from src.evaluation.latency_tracker import LatencyTracker, ComponentTiming
@@ -23,6 +23,7 @@ class AblationConfig:
     name: str = "baseline"
     use_reranker: bool = True
     use_query_rewrite: bool = False
+    use_multi_query: bool = False
     use_hybrid: bool = True
     dense_weight: float = 0.7
     sparse_weight: float = 0.3
@@ -62,6 +63,12 @@ ABLATION_CONFIGS = [
     AblationConfig(name="with_rewrite", use_reranker=True, use_hybrid=True, use_query_rewrite=True),
     AblationConfig(name="top3", use_reranker=True, use_hybrid=True, top_k=3),
     AblationConfig(name="top10", use_reranker=True, use_hybrid=True, top_k=10),
+    AblationConfig(
+        name="with_multi_query",
+        use_reranker=True,
+        use_hybrid=True,
+        use_multi_query=True,
+    ),
 ]
 
 
@@ -74,7 +81,11 @@ def _retrieve_for_sample(
     if config.use_query_rewrite:
         query = rewrite_query(query)
 
-    if config.use_hybrid:
+    if config.use_multi_query:
+        sub_queries = expand_query(query)
+        top_k_for_search = config.top_k * 2 if config.use_reranker else config.top_k
+        docs = retriever.multi_query_search(sub_queries, top_k=top_k_for_search)
+    elif config.use_hybrid:
         if tracker:
             tracker.start()
         docs = retriever.hybrid_search(
@@ -95,12 +106,10 @@ def _retrieve_for_sample(
         if tracker:
             tracker.record("embedding_ms")
             tracker.start()
-        results = retriever.dense_search(query_result["dense"], top_k=config.top_k * 2)
+        # dense_search 已通过 output_fields 带回完整字段（含 content），无需再补查询
+        docs = retriever.dense_search(query_result["dense"], top_k=config.top_k * 2)
         if tracker:
             tracker.record("dense_search_ms")
-        docs = []
-        for chunk_id, score in results:
-            docs.append({"id": chunk_id, "score": score, "content": "", "source": "", "page_num": 0})
 
     if config.use_reranker and docs:
         if tracker:
@@ -119,7 +128,7 @@ def run_single_eval(
     samples: list[EvalSample],
     config: AblationConfig,
     seed: int = 42,
-    enable_claim_faithfulness: bool = True,
+    enable_claim_faithfulness: bool = False,
 ) -> EvalResult:
     """对给定样本集运行一次完整评估，逐条检索、生成、打分，汇总各指标均值和延迟。
 

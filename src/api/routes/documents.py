@@ -15,6 +15,7 @@ from loguru import logger
 
 from src.api.responses import BulkDeleteResponse, BulkImportItemResult, BulkImportResponse, DeleteResponse, ErrorResponse
 from src.config import settings
+from src.db.milvus_client import delete_doc_vectors
 from src.db.mysql_client import get_db, Document
 from src.ingestion.bulk import (
     ALLOWED_EXTENSIONS,
@@ -239,16 +240,11 @@ def delete_document(doc_id: str, db: Session = Depends(get_db)):
     if not doc:
         raise HTTPException(status_code=404, detail=f"Document not found: {doc_id}")
 
-    collection_name = settings.milvus_collection
-    if utility.has_collection(collection_name):
-        try:
-            collection = Collection(collection_name)
-            collection.load()
-            collection.delete(expr=f'doc_id == "{doc_id}"')
-            collection.flush()
-        except MilvusException as e:
-            logger.error(f"Milvus delete failed for doc {doc_id}: {e}")
-            raise HTTPException(status_code=500, detail="Failed to delete vector data")
+    try:
+        delete_doc_vectors(doc_id)
+    except MilvusException as e:
+        logger.error(f"Milvus delete failed for doc {doc_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete vector data")
 
     try:
         db.delete(doc)

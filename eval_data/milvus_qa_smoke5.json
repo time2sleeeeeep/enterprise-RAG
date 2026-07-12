@@ -1,0 +1,72 @@
+[
+  {
+    "question": "在所提供的代码中，可取消的上下文是如何创建的？客户端连接使用的是哪个 Milvus 地址？",
+    "ground_truth": "该代码使用 `context.WithCancel(context.Background())` 创建了一个可取消的上下文，并将其赋值给变量 `ctx`，同时",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "fb5c70f7d84b9d76c518f8c016bf4976": 2
+    },
+    "expected_sources": [
+      "array_data_type.md"
+    ],
+    "seed_chunk_id": "fb5c70f7d84b9d76c518f8c016bf4976",
+    "difficulty": "medium"
+  },
+  {
+    "question": "如果我想在安装 kotaemon 的同时将默认向量存储从其他类型切换到 Milvus，我应该按照什么顺序执行哪些关键步骤？请详细说明每一步涉及的具体文件、命令或配置修改。",
+    "ground_truth": "根据上下文，首先应按照推荐的安装流程安装 kotaemon：在可选设置环境步骤中，使用 `conda create -n kotaemon python=3.10` 和 `conda activate kotaemon` 创建并激活环境，然后通过 `git clone https://github.com/Cinnamon/kotaemon` 克隆仓库，接着进入 kotaemon 目录并依次执行 `pip install -e \"libs/kotaemon[all]\"` 和 `pip install -e \"libs/ktem\"` 完成安装。安装完成后，为了将默认向量存储更改为 Milvus，需要修改 `flowsettings.py` 文件，将其中向量存储配置部分的 `\"__type__\"` 字段值改为 `\"kotaemon.storages.MilvusVectorStore\"`。最后，还需要设置相应的环境变量，但上下文中未给出具体变量名称和值，仅提到“设置环境变量”这一步骤。因此，完整的顺序是：安装 → 修改 flowsettings.py 中的向量存储类型 → 设置环境变量。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "7c9bfb223d4ddfb360b255e80ed24f0c": 2
+    },
+    "expected_sources": [
+      "kotaemon_with_milvus.md"
+    ],
+    "seed_chunk_id": "7c9bfb223d4ddfb360b255e80ed24f0c",
+    "difficulty": "complex"
+  },
+  {
+    "question": "根据所提供的上下文，安装 Milvus Operator 的推荐方法是什么？安装完成后应立即执行什么操作？",
+    "ground_truth": "该上下文推荐使用 Helm 安装 Milvus Operator 以简化配置流程。首先，通过运行以下命令添加 Helm 仓库：  \n``` \nhelm repo add milvus-operator https://zilliztech.github.io/milvus-operator  \nhelm repo update milvus-operator  \n```  \n然后在命名空间 `milvus-operator` 中安装 Operator：  \n```  \nhelm -n milvus-operator upgrade --install --create-namespace milvus-operator milvus-operator/milvus-operator  \n```  \nMilvus Operator 安装完成后，下一步应立即按照 Milvus 文档网站上的其余指导部署 Milvus，如“步骤4：部署 Milvus”所述。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "2eca248be848466c0ac59ea28772cf3e": 2
+    },
+    "expected_sources": [
+      "openshift.md"
+    ],
+    "seed_chunk_id": "2eca248be848466c0ac59ea28772cf3e",
+    "difficulty": "medium"
+  },
+  {
+    "question": "在提供的查询中，过滤器 `“ratings[0] > 4”` 是否会考虑 tags 字段或 ratings 的第一个元素之外的任何其他字段？请结合代码和输出进行解释。",
+    "ground_truth": "该过滤器仅应用于 “ratings” 数组字段，具体针对其第一个元素（索引 0）。条件 `“ratings[0] > 4”` 会选择第一个评分严格大于 4 的文档。在输出中，返回的两条记录的 pk=",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "aa16b1a1a7f1f28b5c9664d5855d80f0": 2
+    },
+    "expected_sources": [
+      "array_data_type.md"
+    ],
+    "seed_chunk_id": "aa16b1a1a7f1f28b5c9664d5855d80f0",
+    "difficulty": "complex"
+  },
+  {
+    "question": "如何检查 Milvus 元数据迁移的状态？",
+    "ground_truth": "运行命令 `kubectl describe milvus release-name` 来检查元数据迁移的状态。输出中显示 `ready` 状态即表示迁移成功。或者，也可以运行 `kubectl get pod` 检查所有 pods，如果所有 pods 都是 ready 状态，则元数据迁移成功。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "86c022953d0aba378933cdfdd71fc7b5": 2
+    },
+    "expected_sources": [
+      "upgrade_milvus_standalone-operator.md"
+    ],
+    "seed_chunk_id": "86c022953d0aba378933cdfdd71fc7b5",
+    "difficulty": "simple"
+  }
+]

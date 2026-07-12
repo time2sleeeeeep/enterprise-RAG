@@ -9,7 +9,7 @@ from loguru import logger
 from src.config import settings
 from src.core.chunking import ChunkingStrategy, get_chunker
 from src.core.embeddings import get_embedder
-from src.db.milvus_client import connect_milvus, create_collection
+from src.db.milvus_client import connect_milvus, create_collection, delete_doc_vectors
 from src.db.mysql_client import SessionLocal, Document
 from src.ingestion.loader import load_document
 from src.ingestion.parser import clean_text, extract_page_markers
@@ -67,6 +67,12 @@ def ingest_document(
 
     connect_milvus()
     collection = create_collection(settings.milvus_collection)
+
+    # 重新摄入时先清理该 doc_id 的旧向量，避免孤儿/主键冲突（删除失败不阻断摄入）
+    try:
+        delete_doc_vectors(doc_id)
+    except Exception as e:
+        logger.warning(f"Failed to clean old vectors for doc_id={doc_id}: {e}")
 
     entities = []
     for i, chunk in enumerate(all_chunks):

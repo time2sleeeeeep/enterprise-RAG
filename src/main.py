@@ -10,8 +10,10 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from src.api.health import check_health
 from src.api.responses import ErrorResponse, HealthResponse
 from src.api.routes import chat, documents, eval
+from src.config import settings
 from src.db.mysql_client import init_db
 from src.db.milvus_client import connect_milvus, disconnect_milvus
 from src.db.redis_client import close_redis
@@ -36,10 +38,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+_cors_origins = settings.cors_origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials=("*" not in _cors_origins),  # 通配源时关 credentials，符合 CORS 规范
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -96,11 +99,19 @@ async def global_exception_handler(request: Request, exc: Exception):
     response_model=HealthResponse,
     responses={
         500: {"model": ErrorResponse, "description": "服务不可用"},
+        503: {"model": HealthResponse, "description": "依赖服务不可用"},
     },
 )
 async def health_check():
-    """健康检查接口，返回服务状态。"""
-    return HealthResponse(status="healthy", service="enterprise-rag")
+    """健康检查：探活 Milvus/MySQL/Redis，任一不可用返回 503 degraded。"""
+    result = await check_health()
+    status = "healthy" if result["all_up"] else "degraded"
+    body = HealthResponse(
+        status=status, service="enterprise-rag", dependencies=result["dependencies"]
+    )
+    if result["all_up"]:
+        return body
+    return JSONResponse(status_code=503, content=body.model_dump())
 
 
 app.include_router(chat.router, prefix="/api/v1", tags=["Chat"])

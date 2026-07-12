@@ -2,6 +2,7 @@
 # 数据集生成、消融实验、报告生成等离线任务请使用 CLI：
 #   python -m src.evaluation.cli --help
 
+import asyncio
 import json
 from pathlib import Path
 
@@ -34,6 +35,7 @@ class EvalRequest(BaseModel):
     enable_claim_faithfulness: bool = False         # 声明级忠实度（更严格，但多 2 次 LLM 调用）
     use_reranker: bool = True
     use_query_rewrite: bool = False
+    use_multi_query: bool = False
     top_k: int = 5
 
 
@@ -90,7 +92,6 @@ async def run_evaluation(request: EvalRequest):
     """
     from src.evaluation.run_eval import AblationConfig, run_single_eval
     from src.evaluation.statistical import run_eval_with_stats
-    from src.db.milvus_client import connect_milvus, disconnect_milvus
 
     # 加载数据集
     try:
@@ -116,6 +117,7 @@ async def run_evaluation(request: EvalRequest):
                 name="api_eval",
                 use_reranker=request.use_reranker,
                 use_query_rewrite=request.use_query_rewrite,
+                use_multi_query=request.use_multi_query,
                 top_k=request.top_k,
             )
         else:
@@ -130,6 +132,8 @@ async def run_evaluation(request: EvalRequest):
             config.use_reranker = False
         if request.use_query_rewrite:
             config.use_query_rewrite = True
+        if request.use_multi_query:
+            config.use_multi_query = True
         if request.top_k != 5:
             config.top_k = request.top_k
 
@@ -138,10 +142,12 @@ async def run_evaluation(request: EvalRequest):
         f"runs={request.n_runs}, claim_faithfulness={request.enable_claim_faithfulness}"
     )
 
-    connect_milvus()
+    # 评估为长耗时同步任务（检索+生成+LLM 打分），丢入线程池避免阻塞事件循环；
+    # Milvus 连接由应用 lifespan 统一管理，此处不再 connect/disconnect，避免拆掉主连接。
     try:
         if request.n_runs > 1:
-            stat_result = run_eval_with_stats(
+            stat_result = await asyncio.to_thread(
+                run_eval_with_stats,
                 samples, config,
                 n_runs=request.n_runs,
                 enable_claim_faithfulness=request.enable_claim_faithfulness,
@@ -170,7 +176,8 @@ async def run_evaluation(request: EvalRequest):
                 latency_percentiles=first.latency_percentiles if first else None,
             )
         else:
-            result = run_single_eval(
+            result = await asyncio.to_thread(
+                run_single_eval,
                 samples, config,
                 enable_claim_faithfulness=request.enable_claim_faithfulness,
             )
@@ -187,8 +194,6 @@ async def run_evaluation(request: EvalRequest):
     except Exception as e:
         logger.error(f"Evaluation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Evaluation failed: {e}")
-    finally:
-        disconnect_milvus()
 
 
 # ---------------------------------------------------------------------------

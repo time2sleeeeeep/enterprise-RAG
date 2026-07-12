@@ -50,12 +50,36 @@ def _format_score(score: float | None) -> str:
     return f"{score:.4f}"
 
 
+# 指标名称中英文映射
+METRIC_LABELS = {
+    "faithfulness": "忠实度",
+    "faithfulness_claim": "忠实度(声明)",
+    "answer_relevancy": "回答相关性",
+    "context_precision": "上下文精确率",
+    "context_recall": "上下文召回率",
+    "correctness": "正确性",
+    "precision_at_5": "精确率@5",
+    "precision_at_10": "精确率@10",
+    "recall_at_5": "召回率@5",
+    "recall_at_10": "召回率@10",
+    "mrr": "MRR",
+    "ndcg_at_10": "NDCG@10",
+    "hit_rate_at_5": "命中率@5",
+    "map_score": "MAP",
+}
+
+
+def _metric_label(metric: str) -> str:
+    """返回指标的中文标签，未知指标回退为原始名称。"""
+    return METRIC_LABELS.get(metric, metric)
+
+
 def _load_results_from_dir(results_dir: str) -> dict[str, dict]:
     """从目录加载所有 eval JSON 结果文件（ablation_summary.json 或 *_detail.json）。"""
     results: dict[str, dict] = {}
     dir_path = Path(results_dir)
     if not dir_path.exists():
-        logger.error(f"Results directory not found: {results_dir}")
+        logger.error(f"未找到结果目录：{results_dir}")
         return results
 
     # 优先加载 summary
@@ -141,14 +165,14 @@ def _html_header(title: str, subtitle: str = "") -> str:
 
 def _html_footer() -> str:
     return f"""<div class="footer">
-Generated at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} · Enterprise RAG Evaluation Framework
+生成时间 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} · 企业级 RAG 评估框架
 </div></div></body></html>"""
 
 
 def _render_metric_table(results: dict[str, dict]) -> str:
     """渲染指标对比表。"""
     if not results:
-        return "<p>No results available.</p>"
+        return "<p>暂无结果。</p>"
 
     # 收集所有指标名
     all_metrics = set()
@@ -165,11 +189,11 @@ def _render_metric_table(results: dict[str, dict]) -> str:
     ordered = llm_metrics + retrieval_metrics
 
     if not ordered:
-        return "<p>No metrics found in results.</p>"
+        return "<p>结果中未找到指标数据。</p>"
 
     rows = []
     # 表头
-    header_cells = "<th>Config</th>" + "".join(f"<th>{m}</th>" for m in ordered)
+    header_cells = "<th>配置</th>" + "".join(f"<th>{_metric_label(m)}</th>" for m in ordered)
     rows.append(f"<tr>{header_cells}</tr>")
 
     for cfg_name, cfg_data in results.items():
@@ -185,7 +209,7 @@ def _render_metric_table(results: dict[str, dict]) -> str:
         rows.append(f"<tr>{cells}</tr>")
 
     # 找最佳值
-    best_row = "<td><strong>Best</strong></td>"
+    best_row = "<td><strong>最佳</strong></td>"
     for m in ordered:
         valid_vals = [(n, d["metrics"].get(m)) for n, d in results.items() if d.get("metrics", {}).get(m) is not None]
         if valid_vals:
@@ -197,7 +221,7 @@ def _render_metric_table(results: dict[str, dict]) -> str:
 
     return f"""
 <div class="card">
-<h3>📊 Metric Comparison</h3>
+<h3>📊 指标对比</h3>
 <table>{''.join(rows)}</table>
 </div>"""
 
@@ -205,12 +229,12 @@ def _render_metric_table(results: dict[str, dict]) -> str:
 def _render_latency_table(results: dict[str, dict]) -> str:
     """渲染延迟分解表。"""
     timing_keys = [
-        ("embedding_ms", "Embedding"),
-        ("dense_search_ms", "Dense Search"),
-        ("sparse_search_ms", "Sparse Search"),
-        ("reranking_ms", "Reranking"),
-        ("generation_ms", "Generation"),
-        ("scoring_ms", "Scoring"),
+        ("embedding_ms", "向量化"),
+        ("dense_search_ms", "稠密检索"),
+        ("sparse_search_ms", "稀疏检索"),
+        ("reranking_ms", "重排序"),
+        ("generation_ms", "生成"),
+        ("scoring_ms", "评分"),
     ]
 
     has_timing = False
@@ -223,10 +247,10 @@ def _render_latency_table(results: dict[str, dict]) -> str:
         return ""
 
     rows = []
-    header = "<th>Config</th>"
+    header = "<th>配置</th>"
     for _, label in timing_keys:
         header += f"<th>{label} (ms)</th>"
-    header += "<th>Total (ms)</th><th>Avg/Sample (s)</th>"
+    header += "<th>总计 (ms)</th><th>平均/样本 (s)</th>"
     rows.append(f"<tr>{header}</tr>")
 
     for cfg_name, cfg_data in results.items():
@@ -244,7 +268,7 @@ def _render_latency_table(results: dict[str, dict]) -> str:
 
     return f"""
 <div class="card">
-<h3>⏱️ Latency Breakdown</h3>
+<h3>⏱️ 延迟分解</h3>
 <table>{''.join(rows)}</table>
 </div>"""
 
@@ -352,7 +376,7 @@ def _render_svg_bar_chart(
 def generate_html_report(
     results: dict[str, dict],
     output_path: str,
-    title: str = "RAG Evaluation Report",
+    title: str = "RAG 评估报告",
 ) -> str:
     """生成自包含的 HTML 评估报告。
 
@@ -365,24 +389,24 @@ def generate_html_report(
         输出文件路径
     """
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    subtitle = f"Generated: {now} · Configs: {len(results)}"
+    subtitle = f"生成时间：{now} · 配置数：{len(results)}"
 
     sections = [
         _html_header(title, subtitle),
-        "<h2>📈 Overview</h2>",
+        "<h2>📈 概览</h2>",
         _render_summary_cards(results),
-        "<h2>📊 Metrics</h2>",
+        "<h2>📊 指标</h2>",
         _render_metric_table(results),
     ]
 
     # 延迟分解
     latency_section = _render_latency_table(results)
     if latency_section:
-        sections.append("<h2>⏱️ Latency</h2>")
+        sections.append("<h2>⏱️ 延迟</h2>")
         sections.append(latency_section)
 
     # 柱状图
-    sections.append("<h2>📉 Charts</h2>")
+    sections.append("<h2>📉 图表</h2>")
     chart_html = _render_metric_charts(results)
     if chart_html:
         sections.append(chart_html)
@@ -394,7 +418,7 @@ def generate_html_report(
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html)
 
-    logger.info(f"HTML report saved to {output_path}")
+    logger.info(f"HTML 报告已保存至 {output_path}")
     return output_path
 
 
@@ -410,7 +434,7 @@ def _render_summary_cards(results: dict[str, dict]) -> str:
                 key_metrics.append((m, val))
         metric_html = "".join(
             f'<div class="metric-card"><div class="value" style="color:{_score_color(v)}">{v:.3f}</div>'
-            f'<div class="label">{m}</div></div>'
+            f'<div class="label">{_metric_label(m)}</div></div>'
             for m, v in key_metrics
         )
         cards.append(f'<div class="card"><h3>{cfg_name}</h3><div class="metric-section">{metric_html}</div></div>')
@@ -443,7 +467,7 @@ def _render_metric_charts(results: dict[str, dict]) -> str:
             selected.append(m)
     selected = selected[:10]  # 最多 10 个指标
 
-    labels = selected
+    labels = [_metric_label(m) for m in selected]
     config_names = list(results.keys())
     datasets = []
     for ci, cfg_name in enumerate(config_names):
@@ -455,7 +479,7 @@ def _render_metric_charts(results: dict[str, dict]) -> str:
             "color": COLORS["chart_colors"][ci % len(COLORS["chart_colors"])],
         })
 
-    return _render_svg_bar_chart(labels, datasets, title="📊 Metric Comparison Chart")
+    return _render_svg_bar_chart(labels, datasets, title="📊 指标对比图")
 
 
 # ---------------------------------------------------------------------------
@@ -465,7 +489,7 @@ def _render_metric_charts(results: dict[str, dict]) -> str:
 def generate_markdown_report(
     results: dict[str, dict],
     output_path: str,
-    title: str = "RAG Evaluation Report",
+    title: str = "RAG 评估报告",
 ) -> str:
     """生成 Markdown 格式的评估报告。
 
@@ -481,7 +505,7 @@ def generate_markdown_report(
     lines = [
         f"# {title}",
         f"",
-        f"> Generated: {now} · Configs: {len(results)}",
+        f"> 生成时间：{now} · 配置数：{len(results)}",
         f"",
     ]
 
@@ -490,7 +514,7 @@ def generate_markdown_report(
     for cfg in results.values():
         all_metrics.update(cfg.get("metrics", {}).keys())
     if not all_metrics:
-        lines.append("No metrics available.")
+        lines.append("暂无指标数据。")
     else:
         priority = [
             "faithfulness", "faithfulness_claim", "answer_relevancy",
@@ -503,41 +527,41 @@ def generate_markdown_report(
                 ordered.append(m)
 
         # 表头
-        header = "| Config | " + " | ".join(ordered) + " | Avg Latency |"
+        header = "| 配置 | " + " | ".join(_metric_label(m) for m in ordered) + " | 平均延迟 |"
         sep = "|" + "|".join(["---"] * (len(ordered) + 2)) + "|"
-        lines.append("## 📊 Metrics")
+        lines.append("## 📊 指标")
         lines.append("")
         lines.append(header)
         lines.append(sep)
 
         for cfg_name, cfg_data in results.items():
-        metrics = cfg_data.get("metrics", {})
-        row = f"| **{cfg_name}** |"
-        for m in ordered:
-            val = metrics.get(m)
-            row += f" {val:.4f} |" if val is not None else " — |"
-        svc_lat = cfg_data.get("avg_service_latency", cfg_data.get("avg_latency", 0))
-        row += f" {svc_lat:.2f}s |"
-        lines.append(row)
+            metrics = cfg_data.get("metrics", {})
+            row = f"| **{cfg_name}** |"
+            for m in ordered:
+                val = metrics.get(m)
+                row += f" {val:.4f} |" if val is not None else " — |"
+            svc_lat = cfg_data.get("avg_service_latency", cfg_data.get("avg_latency", 0))
+            row += f" {svc_lat:.2f}s |"
+            lines.append(row)
 
         lines.append("")
 
     # 延迟表
     timing_cols = [
-        ("embedding_ms", "Embedding"),
-        ("dense_search_ms", "Dense Search"),
-        ("sparse_search_ms", "Sparse Search"),
-        ("reranking_ms", "Reranking"),
-        ("generation_ms", "Generation"),
-        ("scoring_ms", "Scoring"),
+        ("embedding_ms", "向量化"),
+        ("dense_search_ms", "稠密检索"),
+        ("sparse_search_ms", "稀疏检索"),
+        ("reranking_ms", "重排序"),
+        ("generation_ms", "生成"),
+        ("scoring_ms", "评分"),
     ]
     has_timing = any(
         cfg_data.get("per_component_timing") for cfg_data in results.values()
     )
     if has_timing:
-        lines.append("## ⏱️ Latency Breakdown (ms)")
+        lines.append("## ⏱️ 延迟分解 (ms)")
         lines.append("")
-        header = "| Config | " + " | ".join(l for _, l in timing_cols) + " | Total |"
+        header = "| 配置 | " + " | ".join(l for _, l in timing_cols) + " | 总计 |"
         sep = "|" + "|".join(["---"] * (len(timing_cols) + 2)) + "|"
         lines.append(header)
         lines.append(sep)
@@ -556,7 +580,7 @@ def generate_markdown_report(
 
     # Footer
     lines.append("---")
-    lines.append(f"*Generated by Enterprise RAG Evaluation Framework at {now}*")
+    lines.append(f"*由企业级 RAG 评估框架于 {now} 生成*")
     lines.append("")
 
     content = "\n".join(lines)
@@ -564,7 +588,7 @@ def generate_markdown_report(
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(content)
 
-    logger.info(f"Markdown report saved to {output_path}")
+    logger.info(f"Markdown 报告已保存至 {output_path}")
     return output_path
 
 
@@ -589,7 +613,7 @@ def generate_reports_from_dir(
     """
     results = _load_results_from_dir(results_dir)
     if not results:
-        raise ValueError(f"No eval results found in {results_dir}")
+        raise ValueError(f"在 {results_dir} 中未找到评估结果")
 
     output_dir = Path(output_dir or results_dir)
     output_dir.mkdir(parents=True, exist_ok=True)

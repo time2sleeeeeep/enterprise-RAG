@@ -26,10 +26,14 @@ class ValidationErrorResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    """GET /health 健康检查成功响应。"""
+    """GET /health 健康检查响应。"""
 
     status: str = Field(..., description="服务状态", examples=["healthy"])
     service: str = Field(..., description="服务名称", examples=["enterprise-rag"])
+    dependencies: dict[str, str] = Field(
+        default_factory=dict,
+        description="各依赖服务探活结果，如 {milvus: up, mysql: up, redis: up}",
+    )
 
 
 class DeleteResponse(BaseModel):

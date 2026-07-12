@@ -10,17 +10,63 @@ from src.core.embeddings import get_embedder
 from src.db.milvus_client import create_collection
 
 
+def fuse_and_select(
+    rankings: list[list[dict]],
+    top_k: int,
+    rrf_k: int = 60,
+) -> list[dict]:
+    """多路排名列表 RRF 融合 + 按融合分值选取 top_k 完整文档。
+
+    各路列表的元素 dict 应带 id/content/source/page_num/doc_id 字段；
+    返回的每个 dict 含上述全部字段，score 为 RRF 融合分值。
+    """
+    fused = reciprocal_rank_fusion(rankings, k=rrf_k)
+
+    # 按 id 建索引，优先保留先出现的文档（setdefault）
+    id_to_doc: dict[str, dict] = {}
+    for ranking in rankings:
+        for doc in ranking:
+            id_to_doc.setdefault(doc["id"], doc)
+
+    results = []
+    for doc_id, score in fused[:top_k]:
+        doc = id_to_doc.get(doc_id)
+        if doc is not None:
+            results.append({
+                "id": doc["id"],
+                "content": doc["content"],
+                "source": doc["source"],
+                "page_num": doc["page_num"],
+                "doc_id": doc["doc_id"],
+                "score": score,
+            })
+    return results
+
+
 def reciprocal_rank_fusion(
-    rankings: list[list[tuple[str, float]]],
+    rankings: list[list[dict]],
     k: int = 60,
 ) -> list[tuple[str, float]]:
-    """对多路检索结果做 RRF 融合，返回按融合分值降序排列的文档列表。"""
+    """对多路检索结果做 RRF 融合，返回按融合分值降序排列的 (id, score) 列表。"""
     scores: dict[str, float] = {}
     for ranking in rankings:
-        for rank, (doc_id, _) in enumerate(ranking):
+        for rank, doc in enumerate(ranking):
+            doc_id = doc["id"]
             scores[doc_id] = scores.get(doc_id, 0.0) + 1.0 / (k + rank + 1)
     fused = sorted(scores.items(), key=lambda x: x[1], reverse=True)
     return fused
+
+
+def _hit_to_doc(hit) -> dict:
+    """将 Milvus 搜索命中对象转为带完整字段的文档字典（content 等随检索一次取回）。"""
+    return {
+        "id": hit.id,
+        "score": hit.score,
+        "content": hit.get("content") or "",
+        "source": hit.get("source") or "",
+        "page_num": hit.get("page_num") or 0,
+        "doc_id": hit.get("doc_id") or "",
+    }
 
 
 class HybridRetriever:
@@ -39,8 +85,8 @@ class HybridRetriever:
 
     def dense_search(
         self, query_embedding: np.ndarray, top_k: int = 20
-    ) -> list[tuple[str, float]]:
-        """执行稠密向量 COSINE 相似度搜索，返回 (id, score) 列表。"""
+    ) -> list[dict]:
+        """执行稠密向量 COSINE 相似度搜索，返回带完整字段的文档列表。"""
         collection = self._get_collection()
         results = collection.search(
             data=[query_embedding.tolist()],
@@ -49,15 +95,12 @@ class HybridRetriever:
             limit=top_k,
             output_fields=["id", "content", "source", "page_num", "doc_id"],
         )
-        hits = []
-        for hit in results[0]:
-            hits.append((hit.id, hit.score))
-        return hits
+        return [_hit_to_doc(hit) for hit in results[0]]
 
     def sparse_search(
         self, query_sparse: dict, top_k: int = 20
-    ) -> list[tuple[str, float]]:
-        """执行稀疏向量内积搜索（BM25-like），返回 (id, score) 列表。"""
+    ) -> list[dict]:
+        """执行稀疏向量内积搜索（BM25-like），返回带完整字段的文档列表。"""
         collection = self._get_collection()
         results = collection.search(
             data=[query_sparse],
@@ -66,10 +109,7 @@ class HybridRetriever:
             limit=top_k,
             output_fields=["id", "content", "source", "page_num", "doc_id"],
         )
-        hits = []
-        for hit in results[0]:
-            hits.append((hit.id, hit.score))
-        return hits
+        return [_hit_to_doc(hit) for hit in results[0]]
 
     def hybrid_search(
         self,
@@ -79,39 +119,31 @@ class HybridRetriever:
         sparse_weight: float = 0.3,
         rrf_k: int = 60,
     ) -> list[dict]:
-        """编码查询后同时执行稠密/稀疏搜索，RRF 融合后按 top_ids 从 Milvus 批量取回完整文档。"""
+        """稠密 + 稀疏检索 → 一路 RRF 融合，返回 top_k 完整文档。"""
         query_emb = self.embedder.encode_query(query)
-        dense_vector = query_emb["dense"]
-        sparse_vector = query_emb["sparse"]
+        dense_results = self.dense_search(query_emb["dense"], top_k=top_k * 3)
+        sparse_results = self.sparse_search(query_emb["sparse"], top_k=top_k * 3)
 
-        dense_results = self.dense_search(dense_vector, top_k=top_k * 3)
-        sparse_results = self.sparse_search(sparse_vector, top_k=top_k * 3)
-
-        logger.debug(f"Dense hits: {len(dense_results)}, Sparse hits: {len(sparse_results)}")
-
-        fused = reciprocal_rank_fusion([dense_results, sparse_results], k=rrf_k)
-        top_ids = [doc_id for doc_id, _ in fused[:top_k]]
-
-        collection = self._get_collection()
-        docs = collection.query(
-            expr=f'id in {top_ids}',
-            output_fields=["id", "content", "source", "page_num", "doc_id"],
+        logger.debug(
+            f"Dense hits: {len(dense_results)}, Sparse hits: {len(sparse_results)}"
         )
+        return fuse_and_select([dense_results, sparse_results], top_k, rrf_k)
 
-        id_to_doc = {d["id"]: d for d in docs}
-        results = []
-        for doc_id, score in fused[:top_k]:
-            if doc_id in id_to_doc:
-                doc = id_to_doc[doc_id]
-                results.append({
-                    "id": doc["id"],
-                    "content": doc["content"],
-                    "source": doc["source"],
-                    "page_num": doc["page_num"],
-                    "doc_id": doc["doc_id"],
-                    "score": score,
-                })
-        return results
+    def multi_query_search(
+        self,
+        queries: list[str],
+        top_k: int = 10,
+        rrf_k: int = 60,
+    ) -> list[dict]:
+        """多查询扁平 RRF 检索：每个子查询分别 dense+sparse 检索，全部 2×len(queries) 路
+        结果一次性喂给 RRF 融合，无中间截断（避免两级 RRF 丢信息）。"""
+        all_rankings: list[list[dict]] = []
+        for q in queries:
+            q_emb = self.embedder.encode_query(q)
+            all_rankings.append(self.dense_search(q_emb["dense"], top_k=top_k * 3))
+            all_rankings.append(self.sparse_search(q_emb["sparse"], top_k=top_k * 3))
+
+        return fuse_and_select(all_rankings, top_k, rrf_k)
 
 
 _retriever: HybridRetriever | None = None

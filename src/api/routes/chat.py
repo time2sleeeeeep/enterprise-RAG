@@ -1,6 +1,7 @@
 # 对话路由：提供 POST /chat 接口，实现完整的 RAG 问答流程。
 # 依次执行：查询缓存 -> 查询改写 -> 混合检索 -> 重排序 -> LLM 生成 -> 结果缓存 -> 写入聊天历史。
 
+import asyncio
 import json
 import uuid
 
@@ -13,7 +14,7 @@ from src.api.responses import ErrorResponse
 from src.config import settings
 from src.core.cache import get_cached_answer, set_cached_answer
 from src.core.generator import generate_answer
-from src.core.query_rewriter import rewrite_query
+from src.core.query_rewriter import expand_query, rewrite_query
 from src.core.reranker import get_reranker
 from src.core.retriever import get_retriever
 from src.db.mysql_client import ChatHistory, get_db
@@ -28,6 +29,7 @@ class ChatRequest(BaseModel):
     use_reranker: bool = True
     use_cache: bool = True
     use_query_rewrite: bool = True
+    use_multi_query: bool = False
 
 
 class SourceDoc(BaseModel):
@@ -71,27 +73,37 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
         except Exception as e:
             logger.warning(f"Cache read failed, continuing without cache: {e}")
 
-    # 2. 查询改写
+    # 2. 查询改写（同步 LLM 调用，丢入线程池避免阻塞事件循环）
     query = request.question
     if request.use_query_rewrite:
         try:
-            query = rewrite_query(request.question)
+            query = await asyncio.to_thread(rewrite_query, request.question)
         except Exception as e:
             logger.warning(f"Query rewrite failed, using original query: {e}")
 
-    # 3. 混合检索
+    # 3. 混合检索（pymilvus 同步 + torch 编码，丢入线程池避免阻塞事件循环；
+    #    use_multi_query 时先扩展子查询再扁平 RRF 融合全部结果）
     try:
         retriever = get_retriever()
-        documents = retriever.hybrid_search(query, top_k=request.top_k * 3)
+        if request.use_multi_query:
+            sub_queries = await asyncio.to_thread(expand_query, query)
+            documents = await asyncio.to_thread(
+                retriever.multi_query_search, sub_queries, top_k=request.top_k * 3
+            )
+        else:
+            documents = await asyncio.to_thread(
+                retriever.hybrid_search, query, top_k=request.top_k * 3
+            )
     except Exception as e:
         logger.error(f"Hybrid search failed: {e}")
         raise HTTPException(status_code=503, detail="Search service unavailable")
 
-    # 4. 重排序
+    # 4. 重排序（torch 推理，丢入线程池避免阻塞事件循环）
     if request.use_reranker and documents:
         try:
             reranker = get_reranker()
-            documents = reranker.rerank(
+            documents = await asyncio.to_thread(
+                reranker.rerank,
                 query=request.question,
                 documents=documents,
                 top_k=request.top_k,
@@ -119,9 +131,10 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
         except Exception as e:
             logger.warning(f"Failed to load chat history: {e}")
 
-    # 6. LLM 生成
+    # 6. LLM 生成（同步 LLM 调用，丢入线程池避免阻塞事件循环）
     try:
-        result = generate_answer(
+        result = await asyncio.to_thread(
+            generate_answer,
             request.question,
             documents,
             history=history_messages or None,

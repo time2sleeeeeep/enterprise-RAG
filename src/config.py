@@ -1,10 +1,12 @@
 # 全局配置模块：通过 pydantic-settings 从 .env 文件加载所有服务配置，
 # 包括 DeepSeek API、Milvus、MySQL、Redis、嵌入模型、重排序模型及服务器参数。
 
+import json
 import os
+from typing import Annotated
 
-from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic_settings import BaseSettings, NoDecode
+from pydantic import Field, field_validator
 
 
 class Settings(BaseSettings):
@@ -33,6 +35,8 @@ class Settings(BaseSettings):
     redis_password: str = Field(default="")
     redis_max_memory: str = Field(default="512mb")
     redis_max_memory_policy: str = Field(default="allkeys-lru")
+    # 语义缓存 SCAN 比对上限（避免缓存增长后单次 miss 线性扫描过久）
+    semantic_cache_scan_limit: int = Field(default=500)
 
     # Embedding
     embedding_model_name: str = Field(default="BAAI/bge-m3")
@@ -62,6 +66,22 @@ class Settings(BaseSettings):
     # Server
     server_host: str = Field(default="0.0.0.0")
     server_port: int = Field(default=8000)
+    # CORS：env 可传逗号分隔字符串或 JSON 数组，如 CORS_ORIGINS=http://a.com,http://b.com
+    cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["*"])
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, v):
+        """兼容逗号分隔字符串与 JSON 数组两种 env 写法。"""
+        if isinstance(v, str):
+            v = v.strip()
+            if v.startswith("["):
+                try:
+                    return json.loads(v)
+                except json.JSONDecodeError:
+                    pass
+            return [s.strip() for s in v.split(",") if s.strip()]
+        return v
 
     @property
     def mysql_url(self) -> str:

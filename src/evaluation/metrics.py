@@ -1,5 +1,6 @@
 # RAG 评估指标模块：通过 LLM 裁判计算五种指标（忠实度、答案相关性、上下文精确率、上下文召回率、正确性）。
 # 每个指标让 LLM 输出 0.0~1.0 的评分。
+# 裁判模型由 eval_judge_model 配置，缺省回退到 deepseek_model，可换用独立模型缓解自评偏置。
 
 import re
 from openai import OpenAI
@@ -20,9 +21,10 @@ def _llm_judge(prompt: str) -> str:
     出现空输出时自动用 temperature=0.1 重试一次。
     """
     client = _get_llm_client()
+    judge_model = settings.eval_judge_model or settings.deepseek_model
     for attempt, temp in enumerate([0, 0.1]):
         resp = client.chat.completions.create(
-            model=settings.deepseek_model,
+            model=judge_model,
             messages=[{"role": "user", "content": prompt}],
             temperature=temp,
             max_tokens=256,
@@ -39,16 +41,16 @@ def faithfulness_score(answer: str, contexts: list[str]) -> float:
     if not answer or not contexts:
         return 0.0
     context_text = "\n---\n".join(contexts[:5])
-    prompt = f"""Judge whether the answer is faithful to the given context.
-Score from 0.0 to 1.0 where 1.0 means fully supported by context.
+    prompt = f"""请判断以下答案是否忠实于给定的上下文。
+请给出 0.0 到 1.0 的评分，1.0 表示答案完全由上下文支持。
 
-Context:
+上下文：
 {context_text}
 
-Answer:
+答案：
 {answer}
 
-Reply with ONLY a number between 0.0 and 1.0."""
+请只回复一个 0.0 到 1.0 之间的数字。"""
     try:
         score = float(_llm_judge(prompt))
         return max(0.0, min(1.0, score))
@@ -60,13 +62,13 @@ def answer_relevancy_score(question: str, answer: str) -> float:
     """评估答案与问题的相关程度，返回 0.0~1.0 的相关性分值。"""
     if not answer:
         return 0.0
-    prompt = f"""Judge how relevant the answer is to the question.
-Score from 0.0 to 1.0 where 1.0 means perfectly relevant.
+    prompt = f"""请判断以下答案与问题的相关程度。
+请给出 0.0 到 1.0 的评分，1.0 表示完全相关。
 
-Question: {question}
-Answer: {answer}
+问题：{question}
+答案：{answer}
 
-Reply with ONLY a number between 0.0 and 1.0."""
+请只回复一个 0.0 到 1.0 之间的数字。"""
     try:
         score = float(_llm_judge(prompt))
         return max(0.0, min(1.0, score))
@@ -81,14 +83,14 @@ def context_precision_score(question: str, contexts: list[str], ground_truth: st
     relevant_count = 0
     precision_sum = 0.0
     for i, ctx in enumerate(contexts[:10]):
-        prompt = f"""Is this context relevant to answering the question correctly?
-Question: {question}
-Expected answer: {ground_truth}
-Context: {ctx}
+        prompt = f"""以下上下文是否与正确回答该问题相关？
+问题：{question}
+期望答案：{ground_truth}
+上下文：{ctx}
 
-Reply with ONLY "yes" or "no"."""
+请只回复"是"或"否"。"""
         result = _llm_judge(prompt).lower()
-        if "yes" in result:
+        if "是" in result or "yes" in result:
             relevant_count += 1
             precision_sum += relevant_count / (i + 1)
     if relevant_count == 0:
@@ -101,14 +103,14 @@ def context_recall_score(ground_truth: str, contexts: list[str]) -> float:
     if not ground_truth or not contexts:
         return 0.0
     context_text = "\n---\n".join(contexts[:5])
-    prompt = f"""What fraction of the ground truth answer can be attributed to the given contexts?
-Score from 0.0 to 1.0 where 1.0 means the contexts fully cover the ground truth.
+    prompt = f"""标准答案中有多少比例的内容可以由给定上下文支持？
+请给出 0.0 到 1.0 的评分，1.0 表示上下文完全覆盖了标准答案。
 
-Ground truth: {ground_truth}
-Contexts:
+标准答案：{ground_truth}
+上下文：
 {context_text}
 
-Reply with ONLY a number between 0.0 and 1.0."""
+请只回复一个 0.0 到 1.0 之间的数字。"""
     try:
         score = float(_llm_judge(prompt))
         return max(0.0, min(1.0, score))
@@ -120,13 +122,13 @@ def correctness_score(answer: str, ground_truth: str) -> float:
     """对比答案与标准答案的事实准确性，返回 0.0~1.0 的正确性分值。"""
     if not answer or not ground_truth:
         return 0.0
-    prompt = f"""Judge the correctness of the answer compared to ground truth.
-Score from 0.0 to 1.0 where 1.0 means factually equivalent.
+    prompt = f"""请判断答案相对于标准答案的正确性。
+请给出 0.0 到 1.0 的评分，1.0 表示与标准答案在事实上等价。
 
-Ground truth: {ground_truth}
-Answer: {answer}
+标准答案：{ground_truth}
+答案：{answer}
 
-Reply with ONLY a number between 0.0 and 1.0."""
+请只回复一个 0.0 到 1.0 之间的数字。"""
     try:
         score = float(_llm_judge(prompt))
         return max(0.0, min(1.0, score))
@@ -142,27 +144,27 @@ import json
 # 比朴素 LLM 打分更细粒度：先拆解 atomic claims，再逐条验证
 # ---------------------------------------------------------------------------
 
-CLAIM_DECOMPOSE_PROMPT = """Break down the following answer into atomic factual claims.
-Each claim must be a single, self-contained, verifiable statement.
-Do NOT include opinions, hedges, or meta-commentary.
-Output each claim on its own line, prefixed with a dash and space.
+CLAIM_DECOMPOSE_PROMPT = """请将以下答案拆解为若干原子事实声明。
+每条声明必须是一个独立、完整、可验证的陈述。
+不要包含观点、模棱两可的表述或元评论。
+每条声明单独占一行，以短横线和空格开头。
 
-Answer:
+答案：
 {answer}
 
-Output format:
-- claim 1
-- claim 2
-- claim 3"""
+输出格式：
+- 声明 1
+- 声明 2
+- 声明 3"""
 
 
-CLAIM_VERIFY_BATCH_PROMPT = """For each claim below, determine whether it is factually supported by the given context.
-Reply with ONLY "yes" or "no" on each line, one per claim in order.
+CLAIM_VERIFY_BATCH_PROMPT = """请判断以下每条声明是否被给定上下文在事实上支持。
+每行只回复"是"或"否"，按声明顺序逐行对应。
 
-Context:
+上下文：
 {context}
 
-Claims:
+声明：
 {claims}"""
 
 
@@ -217,11 +219,11 @@ def _verify_claims_batch(
         # 空输出降级为逐条验证
         return [_verify_single_claim(c, contexts) for c in claims]
 
-    # 解析逐行 yes/no
+    # 解析逐行 是/否
     supported = []
     for line in raw.split("\n"):
         line = line.strip().lower()
-        supported.append("yes" in line)
+        supported.append("是" in line or "yes" in line)
 
     # 补齐长度
     while len(supported) < len(claims):
@@ -233,15 +235,15 @@ def _verify_claims_batch(
 def _verify_single_claim(claim: str, contexts: list[str]) -> bool:
     """逐条验证单个声明（批处理失败时的降级方案）。"""
     context_text = "\n---\n".join(contexts[:5])
-    prompt = f"""Determine whether the following claim is factually supported by the given context.
-Reply with ONLY "yes" or "no".
+    prompt = f"""请判断以下声明是否被给定上下文在事实上支持。
+请只回复"是"或"否"。
 
-Context:
+上下文：
 {context_text}
 
-Claim: {claim}"""
+声明：{claim}"""
     result = _llm_judge(prompt).lower()
-    return "yes" in result
+    return "是" in result or "yes" in result
 
 
 def claim_faithfulness_score(answer: str, contexts: list[str]) -> float:

@@ -45,43 +45,50 @@ class SyntheticQAConfig:
 # LLM 提示词
 # ---------------------------------------------------------------------------
 
-QA_GENERATION_SYSTEM = """You are a dataset creation expert for evaluating RAG (Retrieval-Augmented Generation) systems.
-Your task is to generate high-quality question-answer pairs from document chunks."""
+QA_GENERATION_SYSTEM = """你是一位用于评估 RAG（检索增强生成）系统的数据集构建专家。
+你的任务是从文档片段中生成高质量的问答对。"""
 
-QA_GENERATION_PROMPT = """Generate a {difficulty} question-answer pair based STRICTLY on the provided context chunk.
+QA_GENERATION_PROMPT = """请严格根据提供的上下文片段，生成一道{difficulty}难度的问答对。
 
-Context:
-Source document: {source}
+上下文：
+来源文档：{source}
 {page_info}
-Text:
+正文：
 {content}
 
-Requirements:
-1. The question MUST be answerable ONLY using the provided context
-2. The question should be specific, unambiguous, and phrased as a real user would ask
+要求：
+1. 问题必须只能通过提供的上下文来回答
+2. 问题应当具体、明确，并以真实用户的提问方式表述
 3. {difficulty_instruction}
-4. The answer must be detailed and only use facts from the context
-5. Include specific details (names, numbers, commands, parameters) in the answer where available
+4. 答案必须详尽，且只能使用上下文中的事实
+5. 答案中应尽可能包含具体细节（名称、数字、命令、参数等）
 
-Output format:
-QUESTION: <one-line question>
-ANSWER: <detailed answer derived from context>"""
+输出格式：
+问题：<一行问题>
+答案：<基于上下文得出的详尽答案>"""
 
 DIFFICULTY_INSTRUCTIONS = {
-    "simple": "The question should be straightforward and directly answered by a single sentence from the context",
-    "medium": "The question should require synthesizing information from multiple parts of the context",
-    "complex": "The question should require reasoning or inference beyond surface-level reading of the context",
+    "simple": "问题应当简单直接，可由上下文中的单句话直接回答",
+    "medium": "问题需要综合上下文中多个部分的信息才能回答",
+    "complex": "问题需要超越表面阅读的推理或推断才能回答",
 }
 
-QA_VALIDATION_PROMPT = """Verify whether this question can be fully answered using ONLY the provided context.
-Reply with ONLY a JSON object: {{"valid": true/false, "reason": "<brief explanation>"}}
+# 难度级别到中文标签的映射（仅用于拼装提示词，存储时仍使用英文键）
+DIFFICULTY_LABELS = {
+    "simple": "简单",
+    "medium": "中等",
+    "complex": "复杂",
+}
 
-Context: {content}
+QA_VALIDATION_PROMPT = """请验证该问题是否可以仅使用提供的上下文完整回答。
+请只回复一个 JSON 对象：{{"valid": true/false, "reason": "<简要说明>"}}
 
-Question: {question}
-Ground truth answer: {answer}
+上下文：{content}
 
-Is the answer fully supported by the context?"""
+问题：{question}
+标准答案：{answer}
+
+该答案是否完全由上下文支持？"""
 
 
 # ---------------------------------------------------------------------------
@@ -204,14 +211,15 @@ def _generate_single_qa(
     content = chunk.get("content", "")
     source = chunk.get("source", "unknown")
     page_num = chunk.get("page_num", 0)
-    page_info = f"Page: {page_num}" if page_num > 0 else ""
+    page_info = f"页码：{page_num}" if page_num > 0 else ""
 
     difficulty_instruction = DIFFICULTY_INSTRUCTIONS.get(
         difficulty, DIFFICULTY_INSTRUCTIONS["medium"]
     )
+    difficulty_label = DIFFICULTY_LABELS.get(difficulty, difficulty)
 
     prompt = QA_GENERATION_PROMPT.format(
-        difficulty=difficulty,
+        difficulty=difficulty_label,
         source=source,
         page_info=page_info,
         content=content[:4000],  # DeepSeek context limit safety
@@ -234,11 +242,16 @@ def _generate_single_qa(
         logger.error(f"LLM generation failed for chunk {chunk.get('id')}: {e}")
         return None
 
-    # 解析 QUESTION: / ANSWER: 格式
+    # 解析 问题:/答案: 格式（兼容全角/半角冒号及英文标记）
     question = ""
     answer = ""
-    if "QUESTION:" in raw and "ANSWER:" in raw:
-        parts = raw.split("ANSWER:", 1)
+    normalized = raw.replace("：", ":")
+    if "问题:" in normalized and "答案:" in normalized:
+        parts = normalized.split("答案:", 1)
+        question = parts[0].replace("问题:", "").strip()
+        answer = parts[1].strip()
+    elif "QUESTION:" in normalized and "ANSWER:" in normalized:
+        parts = normalized.split("ANSWER:", 1)
         question = parts[0].replace("QUESTION:", "").strip()
         answer = parts[1].strip()
     elif "\n" in raw:

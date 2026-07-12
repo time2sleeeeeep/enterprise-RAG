@@ -51,7 +51,7 @@ def run_eval_with_stats(
     config: AblationConfig,
     n_runs: int = 3,
     base_seed: int = 42,
-    enable_claim_faithfulness: bool = True,
+    enable_claim_faithfulness: bool = False,
 ) -> StatisticalResult:
     """对给定样本集运行 N 次评估，汇总统计量。
 

@@ -38,12 +38,19 @@
 
 ## 性能指标
 
-| 配置       | 忠实度 | 相关性 | 精确率 | 延迟 |
-| :--------- | :----- | :----- | :----- | :--- |
-| 基线配置   | 0.91   | 0.89   | 0.85   | 2.1s |
-| 无重排序   | 0.82   | 0.80   | 0.72   | 1.4s |
-| 仅稠密检索 | 0.85   | 0.83   | 0.76   | 1.8s |
-| 含查询改写 | 0.92   | 0.91   | 0.88   | 3.2s |
+*评估数据集：`eval_data/milvus_qa.json`（N=150），消融对比使用前 20 条子集以保证可比性。指标由 DeepSeek 作为 LLM 裁判打分；通过 `eval_judge_model` 配置可换用独立裁判模型以减少自评偏置。*
+
+| 配置 | 忠实度 | 相关性 | 上下文精确率 | 上下文召回率 | 正确性 | 延迟 |
+|:-----|:-----|:-----|:----------|:----------|:-----|:---|
+| 基线配置 | 0.79 | 0.90 | 0.77 | 0.45 | 0.61 | 4.6s |
+| 无重排序 | 0.65 | 0.96 | 0.63 | 0.41 | 0.55 | 3.5s |
+| 仅稠密检索 | 0.85 | 0.98 | 0.81 | 0.50 | 0.62 | 3.3s |
+| 含查询改写 | 0.70 | 0.90 | 0.69 | 0.40 | 0.60 | 6.5s |
+| 含多查询融合 ⚠️ | 0.79 | 0.89 | 0.72 | 0.41 | 0.55 | 7.0s |
+
+*消融实验 N=20，全指标含 retrieval 指标详见 `eval_results/phase0_summary.json`。N=150 基线全指标见 `eval_results/baseline_detail.json`。*
+
+*⚠️ 含多查询融合（`with_multi_query`）：将原始问题扩展为 3 个子查询，对全部 dense+sparse 结果做扁平 RRF 融合。实测 recall@10 下降 8.3%（0.55 vs baseline 0.60）、延迟增加 52%（7.0s vs 4.6s），因此该特性默认关闭。保留代码以供未来探索更优的多查询策略（如 query-focused 去噪或 per-query rerank）。*
 
 ## 技术栈
 
@@ -207,7 +214,7 @@ enterprise-rag/
 │       ├── metrics.py          # LLM-as-judge 指标
 │       └── run_eval.py         # 消融实验运行器
 ├── eval_data/
-│   └── sample_dataset.json     # 示例评估数据集
+│   └── milvus_qa.json     # 150 组评估 QA 对（合成数据，含相关性标注）
 ├── tests/
 ├── docker-compose.yml          # 基础设施服务
 ├── Dockerfile                  # 应用容器
@@ -223,7 +230,7 @@ enterprise-rag/
 # 通过 API 调用
 curl -X POST http://localhost:8000/api/v1/eval/ablation \
   -H "Content-Type: application/json" \
-  -d '{"dataset_path": "eval_data/sample_dataset.json"}'
+  -d '{"dataset_path": "eval_data/milvus_qa.json"}'
 ```
 
 消融实验测试 6 种配置：baseline（基线）、no_reranker（无重排序）、dense_only（仅稠密检索）、with_rewrite（含查询改写）、top3、top10。结果保存至 `eval_results/ablation_summary.json`。
