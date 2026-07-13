@@ -1,0 +1,982 @@
+[
+  {
+    "question": "在提供的查询中，过滤器 `“ratings[0] > 4”` 是否会考虑 tags 字段或 ratings 的第一个元素之外的任何其他字段？请结合代码和输出进行解释。",
+    "ground_truth": "该过滤器仅应用于 “ratings” 数组字段，具体针对其第一个元素（索引 0）。条件 `“ratings[0] > 4”` 会选择第一个评分严格大于 4 的文档。在输出中，返回的两条记录的 pk=",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "aa16b1a1a7f1f28b5c9664d5855d80f0": 2
+    },
+    "expected_sources": [
+      "array_data_type.md"
+    ],
+    "seed_chunk_id": "aa16b1a1a7f1f28b5c9664d5855d80f0",
+    "difficulty": "complex"
+  },
+  {
+    "question": "创建带有本地SSD的GKE节点池的命令是什么？在Azure VMSS中附加本地NVMe磁盘的要求是什么？",
+    "ground_truth": "要创建带有本地SSD的GKE节点池，请使用以下命令：\n```\ngcloud container node-pools create ${POOL_NAME} \\ --cluster=${CLUSTER_NAME} \\ --ephemeral-storage-local-ssd count=${NUMBER_OF_DISKS} \\ --machine-type=${MACHINE_TYPE}\n```\n详情请参阅《在GKE上配置本地SSD存储》。对于Azure，要将本地NVMe磁盘附加到虚拟机规模集（VMSS），需要向VM实例传递自定义数据。提供的上下文指出，给出了如何将NVMe磁盘附加到VMSS中VM实例的示例，但提供的文本中未包含实际示例或进一步要求。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "9e01fc51a206adee3d63c77adb2cc464": 2
+    },
+    "expected_sources": [
+      "configure-querynode-localdisk.md"
+    ],
+    "seed_chunk_id": "9e01fc51a206adee3d63c77adb2cc464",
+    "difficulty": "medium"
+  },
+  {
+    "question": "根据提供的上下文，Milvus 创建于何时，其唯一目标是什么？",
+    "ground_truth": "根据上下文，Milvus 创建于 2019 年，其唯一目标是存储、索引和管理由深度神经网络及其他机器学习模型生成的大规模嵌入向量。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "13e636985d9f7d83404c4e2f353f58a0": 2
+    },
+    "expected_sources": [
+      "integrate_with_spark.md"
+    ],
+    "seed_chunk_id": "13e636985d9f7d83404c4e2f353f58a0",
+    "difficulty": "simple"
+  },
+  {
+    "question": "我需要运行哪些命令来下载 FastGPT 配置文件以及相应的 Docker Compose 文件？可用的两个数据库版本选项是什么？",
+    "ground_truth": "首先，确保已安装 Docker Compose。然后运行以下命令：\n- `mkdir fastgpt` 和 `cd fastgpt` 用于创建并进入目录。\n- 使用 `curl -O https://raw.githubusercontent.com/labring/FastGPT/main/projects/app/data/config.json` 下载配置文件。\n- 对于 Docker Compose 文件，你有两个选项：\n  - **Milvus 版本**：`curl -o docker-compose.yml https://raw.githubusercontent.com/labring/FastGPT/main/files/docker/docker-compose-milvus.yml`\n  - **Zilliz 版本**（在示例中被注释掉）：`curl -o docker-compose.yml https://raw.githubusercontent.com/labring/FastGPT/main/files/docker/docker-compose-zilliz.yml`\n根据所选数据库后端，只需下载两个 Docker Compose 文件中的一个。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "cb7d772a35888eac56a15e1cb20a5928": 2
+    },
+    "expected_sources": [
+      "integrate_with_fastgpt.md"
+    ],
+    "seed_chunk_id": "cb7d772a35888eac56a15e1cb20a5928",
+    "difficulty": "medium"
+  },
+  {
+    "question": "如何从源代码构建并运行 Birdwatcher？",
+    "ground_truth": "从源代码构建 Birdwatcher 需要依次执行以下命令：`git clone https://github.com/milvus-io/birdwatcher.git`，`cd birdwatcher`，`go build -o birdwatcher main.go`。构建完成后，运行 Birdwatcher 的命令是 `./birdwatcher`。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "c156b2cc21a45c134748e12bcdf0f313": 2
+    },
+    "expected_sources": [
+      "birdwatcher_install_guides.md"
+    ],
+    "seed_chunk_id": "c156b2cc21a45c134748e12bcdf0f313",
+    "difficulty": "simple"
+  },
+  {
+    "question": "如何配置一个使用精确模式且禁用HMM的Jieba分词器？文档中Java、Go和RESTful示例使用的参数值是什么？",
+    "ground_truth": "在提供的上下文中，Jieba分词器在不同语言中使用了相同的四个参数进行配置：  \n- `\"type\"`设置为`\"jieba\"`  \n- `\"dict\"`以列表形式提供，包含单个字符串`\"结巴分词器\"`  \n- `\"mode\"`设置为`\"exact\"`  \n- `\"hmm\"`设置为`false`  \n\nJava示例使用`HashMap<String, Object>`，通过`analyzerParams.put(...)`填充这些键值对。Go示例使用包含相同条目的`map[string]any`字面量。对于RESTful访问，上下文仅以`# restful`作为标题，但未提供显式代码；不过，REST API请求体中隐含了相同的参数结构。文档还提到使用`run_analyzer`来验证配置。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "44b6123d5e2fc3473add6189b059ae74": 2
+    },
+    "expected_sources": [
+      "jieba-tokenizer.md"
+    ],
+    "seed_chunk_id": "44b6123d5e2fc3473add6189b059ae74",
+    "difficulty": "complex"
+  },
+  {
+    "question": "如何将 Milvus 中的 proxy 组件副本数设置为 -1 以启用 HPA 控制？",
+    "ground_truth": "您可以使用以下 kubectl patch 命令将 proxy 组件的 replicas 字段设置为 -1：`kubectl patch milvus <your-release-name> --type='json' -p='[{\"op\": \"replace\", \"path\": \"/spec/components/proxy/replicas\", \"value\": -1}]'`，其中 `<your-release-name>` 替换为您的 Milvus 集群名称。执行后可通过 `kubectl get milvus <your-release-name> -o jsonpath='{.spec.components.proxy.replicas}'` 验证，预期输出为 -1。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "1fe4df5ad33278dbc42779cc101fb6a9": 2
+    },
+    "expected_sources": [
+      "hpa.md"
+    ],
+    "seed_chunk_id": "1fe4df5ad33278dbc42779cc101fb6a9",
+    "difficulty": "simple"
+  },
+  {
+    "question": "在 K8s 上配置 Milvus 的 S3 存储有哪两种方法？",
+    "ground_truth": "根据上下文，在 K8s 上配置 Milvus 的 S3 存储有两种方法：第一种是在启动 Milvus 的同一命令中直接配置 S3；第二种是在启动 Milvus 之前，使用 milvus-helm 仓库中 `/charts/milvus` 路径下的 `values.yml` 文件进行配置。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "99d40a9b2aed32629e2bd2a878bebe98": 2
+    },
+    "expected_sources": [
+      "deploy_s3.md"
+    ],
+    "seed_chunk_id": "99d40a9b2aed32629e2bd2a878bebe98",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Milvus Web UI 中列出的哪些任务的查看窗口为 15 分钟，哪些为 30 分钟？",
+    "ground_truth": "根据所提供的上下文，查看窗口为 15 分钟的任务包括 QueryCoord 任务（所有调度器任务，包括均衡器、索引/段/频道/领导检查器）、Compaction 任务和 Data Sync 任务（来自数据节点）。查看窗口为 30 分钟的任务包括 Index Build 任务和 Import 任务（均来自数据协调器）。慢请求的查看窗口也为 15 分钟。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "6469322437265556bc24444b66864a5b": 2
+    },
+    "expected_sources": [
+      "milvus-webui.md"
+    ],
+    "seed_chunk_id": "6469322437265556bc24444b66864a5b",
+    "difficulty": "medium"
+  },
+  {
+    "question": "如何设置 MilvusClient 的 uri 参数以将数据存储在本地文件中？",
+    "ground_truth": "将 uri 设置为本地文件路径，例如 ./milvus.db，是最方便的方法，因为它会自动利用 Milvus Lite 将所有数据存储在此文件中。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "454a42e6b34c18705ecd617c414a77b3": 2
+    },
+    "expected_sources": [
+      "integrate_with_bentoml.md"
+    ],
+    "seed_chunk_id": "454a42e6b34c18705ecd617c414a77b3",
+    "difficulty": "simple"
+  },
+  {
+    "question": "Milvus的Collection支持哪些基本搜索功能？同时，为了提高搜索性能，Milvus提供了哪些默认禁用的增强功能？请列出具体名称。",
+    "ground_truth": "根据上下文，Milvus的基本搜索功能包括：Basic ANN Search、Filtered Search、Range Search、Grouping Search、Hybrid Search、Search Iterator、Query、Full Text Search、Text Match。此外，Milvus还提供增强功能来提高搜索性能和效率，这些功能默认是禁用的，包括：Use Partition Key、Use mmap、Clustering Compaction。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "dda6c4db4e6b7dc9b266e45b379fe493": 2
+    },
+    "expected_sources": [
+      "manage-collections.md"
+    ],
+    "seed_chunk_id": "dda6c4db4e6b7dc9b266e45b379fe493",
+    "difficulty": "medium"
+  },
+  {
+    "question": "启动 Kafka 服务后，启动 Milvus 并使用 SASL/PLAIN 和 SSL 将其连接到 Kafka 的步骤是什么？",
+    "ground_truth": "要使用 SASL/PLAIN 和 SSL 将 Milvus 连接到 Kafka，首先在终端中运行命令 `docker compose up -d` 启动 Kafka 服务。Kafka 运行后，使用提供的 docker-compose.yaml 文件启动 Milvus，该文件已专门配置为使用 SASL/PLAIN 和 SSL 连接到 Kafka。上下文未包含该 YAML 文件的具体内容，但指出应使用此文件以所需的连接设置启动 Milvus。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "c60cdb732d87c91cd87543947ca68fda": 2
+    },
+    "expected_sources": [
+      "connect_kafka_ssl.md"
+    ],
+    "seed_chunk_id": "c60cdb732d87c91cd87543947ca68fda",
+    "difficulty": "medium"
+  },
+  {
+    "question": "在从备份恢复到 milvus_B 的步骤 1 中，需要更改什么配置？修改之后还要执行什么操作？",
+    "ground_truth": "在从备份恢复到 milvus_B 的步骤 1 中，您必须通过重复步骤 2 来修改配置文件，以配置恢复设置。关键更改是确保 `minio.bucketName` 设置为 `bucket_B`。作为参考，提供了一个示例配置。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "5089c6e9edb6c942e3223009a0c6acb6": 2
+    },
+    "expected_sources": [
+      "multi-storage-backup-and-restore.md"
+    ],
+    "seed_chunk_id": "5089c6e9edb6c942e3223009a0c6acb6",
+    "difficulty": "medium"
+  },
+  {
+    "question": "如何报告 Milvus 中的错误或提出功能建议？",
+    "ground_truth": "您可以通过在我们的 GitHub 页面上提交 issue 来报告错误或提出功能建议，或者加入我们活跃的讨论主题来提出功能建议。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "3e1e0d2e1045701d944319f1f4031dca": 2
+    },
+    "expected_sources": [
+      "roadmap.md"
+    ],
+    "seed_chunk_id": "3e1e0d2e1045701d944319f1f4031dca",
+    "difficulty": "simple"
+  },
+  {
+    "question": "在 Java、JavaScript 和 CLI 方法中查询段信息时，使用哪个参数来指定集合名称？该参数的作用是什么？",
+    "ground_truth": "在 Java API 中，参数为 `collectionName`（通过 `withCollectionName` 设置）。在 JavaScript API 中，参数为 `collectionName`（在 options 对象中传递给 `getQuerySegmentInfo`）。在 CLI 命令 `show query_segment` 中，参数为 `collection_name`，通过 `-c` 标志指定（例如 `-c book`）。所有这些参数的作用相同：指定要检查段信息的集合。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "0d63e0c251477ccd1ed11393ed7147fd": 2
+    },
+    "expected_sources": [
+      "load_balance.md"
+    ],
+    "seed_chunk_id": "0d63e0c251477ccd1ed11393ed7147fd",
+    "difficulty": "medium"
+  },
+  {
+    "question": "达特茅斯会议上人工智能的历史基础与 Jina AI 提供的 Jina Reranker 的用途之间有何关联？",
+    "ground_truth": "1956 年的达特茅斯会议被视为人工智能领域的诞生地，约翰·麦卡锡等人提出了“人工智能”这一术语并奠定了其基本目标。为了推进这些目标，Jina AI 提供了一种重排序器，用于在嵌入搜索之后进一步提升检索质量。因此，达特茅斯会议确立了 AI 的基础目标，而 Jina Reranker 则作为一种现代工具，用于增强 AI 系统的关键方面之一——检索质量。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "47d0ec1b253c0ec18c8d25522fbf99c4": 2
+    },
+    "expected_sources": [
+      "integrate_with_jina.md"
+    ],
+    "seed_chunk_id": "47d0ec1b253c0ec18c8d25522fbf99c4",
+    "difficulty": "complex"
+  },
+  {
+    "question": "在 HNSW 索引的 Milvus 搜索代码示例中，`search_params` 内的 `ef` 参数控制什么？它是如何指定的？",
+    "ground_truth": "`ef` 参数指定搜索过程中要考虑的邻居数量。它在 `search_params` 字典中的 `\"params\"` 键下指定。例如，`search_params = { \"params\": { \"ef\": 10 } }` 将邻居数量设置为 10。此参数是对 HNSW 索引进行搜索时附加配置选项的一部分。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "73a46ad27c9cb87bf052a6fe763bc2f7": 2
+    },
+    "expected_sources": [
+      "hnsw.md"
+    ],
+    "seed_chunk_id": "73a46ad27c9cb87bf052a6fe763bc2f7",
+    "difficulty": "medium"
+  },
+  {
+    "question": "在 Milvus 中，长度过滤器如何与分词器配合使用？提供的示例中使用了哪些具体的配置参数？",
+    "ground_truth": "长度过滤器作用于分词器生成的词元，因此必须与分词器配合使用。在定义 `analyzer_params` 后，可以将其应用于定义集合模式时的 `VARCHAR` 字段，从而使 Milvus 能够使用指定的分析器处理文本，实现高效的分词和过滤。提供的示例配置将 `\"tokenizer\"` 设置为 `\"standard\"`，过滤器设置为 `\"type\": \"length\"` 和 `\"max\": 10`，指定了最大词元长度为 10 个字符。在将分析器配置应用到集合模式之前，可以使用 `run_analyzer` 方法验证其行为。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "a4191599bff36bfab15cd91f6e6e4988": 2
+    },
+    "expected_sources": [
+      "length-filter.md"
+    ],
+    "seed_chunk_id": "a4191599bff36bfab15cd91f6e6e4988",
+    "difficulty": "medium"
+  },
+  {
+    "question": "在上下文的示例中，'embedding' 和 'varchar_field1' 字段使用了什么索引类型？",
+    "ground_truth": "在该示例中，向量字段 'embedding' 和标量字段 'varchar_field1' 均使用了 AUTOINDEX 索引类型，该类型允许 Milvus 根据数据类型自动选择最合适的索引。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "e6482f9ad460c0381bc320e89f27aac0": 2
+    },
+    "expected_sources": [
+      "string.md"
+    ],
+    "seed_chunk_id": "e6482f9ad460c0381bc320e89f27aac0",
+    "difficulty": "simple"
+  },
+  {
+    "question": "艾伦·图灵在1950年发表了哪篇论文？他提出了什么概念作为智能的评判标准？",
+    "ground_truth": "1950年，艾伦·图灵发表了他的开创性论文《计算机器与智能》，其中提出将图灵测试作为智能的评判标准。这篇论文被认为是人工智能哲学与发展的基础性概念。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "6512a01f2d14a35944141824a06051da": 2
+    },
+    "expected_sources": [
+      "rerankers-jina.md"
+    ],
+    "seed_chunk_id": "6512a01f2d14a35944141824a06051da",
+    "difficulty": "medium"
+  },
+  {
+    "question": "在集群模式下运行 Milvus 时，推荐的 CPU 核心数、RAM 大小和硬盘类型分别是什么？",
+    "ground_truth": "根据硬件要求，在集群版中，推荐的 CPU 核心数为 8 核或更多，RAM 大小为 128G，硬盘类型为 NVMe SSD 或更高。此外，CPU 需要支持至少一种 SIMD 扩展指令集（如 SSE4.2、AVX、AVX2 或 AVX-512）。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "dd661a8b1ad10ae98ceca75c00533789": 2
+    },
+    "expected_sources": [
+      "prerequisite-helm.md"
+    ],
+    "seed_chunk_id": "dd661a8b1ad10ae98ceca75c00533789",
+    "difficulty": "medium"
+  },
+  {
+    "question": "在提供的 Go 代码中，初始化 Milvus 客户端并配置带自动 ID 的 Schema 需要执行哪些步骤？",
+    "ground_truth": "代码首先导入了必要的包，包括 context、fmt 以及多个 Milvus 客户端包（column、entity、index、milvusclient）。使用 `context.WithCancel(context.Background())` 创建了一个可取消的后台上下文，并推迟执行取消函数。通过 `milvusclient.New(ctx, &milvusclient.ClientConfig{Address: \"localhost:19530\"})` 创建新的 Milvus 客户端。若客户端创建时发生错误，使用 `fmt.Println(err.Error())` 打印错误信息。客户端连接通过 `defer client.Close(ctx)` 推迟关闭。最后，使用 `entity.NewSchema().WithAutoID(true)` 构建 Schema，启用自动 ID 生成。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "49becb4fa0ba6e3d0e9f7a39b830e686": 2
+    },
+    "expected_sources": [
+      "analyzer-overview.md"
+    ],
+    "seed_chunk_id": "49becb4fa0ba6e3d0e9f7a39b830e686",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Milvus 提供了哪几种一致性级别？每种级别如何设置 GuaranteeTs 以及对应的查询行为是什么？",
+    "ground_truth": "Milvus 提供四种具有不同 GuaranteeTs 的一致性级别：  \n- **Strong**：使用最新时间戳作为 GuaranteeTs，QueryNodes 必须等到 ServiceTime 满足 GuaranteeTs 后才能执行搜索请求。  \n- **Eventual**：GuaranteeTs 设置为极小值（如 1），以避免一致性检查，使 QueryNodes 可以立即在所有批量数据上执行搜索请求。  \n- **Bounded Staleness**：GuaranteeTs 设置为比最新时间戳更早的时间点，使 QueryNodes 在可容忍一定数据丢失的情况下执行搜索。  \n- **Session**：使用客户端插入数据的最新时间点作为 GuaranteeTs，使 QueryNodes 可以在客户端插入的所有数据上执行搜索。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "1ccd83e449f747dab5136ed8ffa01b09": 2
+    },
+    "expected_sources": [
+      "tune_consistency.md"
+    ],
+    "seed_chunk_id": "1ccd83e449f747dab5136ed8ffa01b09",
+    "difficulty": "medium"
+  },
+  {
+    "question": "在 Milvus 中存储 Float64 向量值时，这些值在存储和检索过程中的精度会如何变化？",
+    "ground_truth": "根据提供的上下文，Milvus 默认使用 Float32 作为向量的存储类型，其精度约为 7 位十进制数字。即使用户输入了 Float64 向量值，它们也会以 Float32 精度存储，这意味着 Float64 中额外的十进制数字在存储时会被丢弃。这会导致检索向量时可能出现精度损失，因为返回的值仅反映 Float32 的较低精度。因此，用户应当注意，Milvus 不会保留 Float64 向量的完整精度；它们将被截断为大约 7 位有效十进制数字。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "a82998c1818bfa3735c084273d567f9e": 2
+    },
+    "expected_sources": [
+      "build_RAG_with_milvus_and_lepton.md"
+    ],
+    "seed_chunk_id": "a82998c1818bfa3735c084273d567f9e",
+    "difficulty": "complex"
+  },
+  {
+    "question": "在所提供的代码片段中，对 Milvus 集合执行的操作顺序是怎样的，包括决定是否删除现有集合的条件，创建新集合时使用了哪些具体参数，以及插入后打印了什么内容？",
+    "ground_truth": "代码首先使用 `milvus_client.has_collection()` 检查是否存在名称存储在 `COLLECTION_NAME` 中的集合。如果存在，则使用 `milvus_client.drop_collection()` 删除该集合。然后，无论存在性检查结果如何，都会创建一个具有相同 `COLLECTION_NAME` 且维度设置为变量 `DIMENSION` 的新集合。之后，使用 `milvus_client.insert(collection_name=\"demo_collection\", data=data)` 将整个 `data` 插入到名为 `\"demo_collection\"` 的集合中。最后，打印 `res[\"insert_count\"]` 的结果，该值表示成功插入的记录数量。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "d6e82e43fec303ad1b91946600db8dbc": 2
+    },
+    "expected_sources": [
+      "integrate_with_openai.md"
+    ],
+    "seed_chunk_id": "d6e82e43fec303ad1b91946600db8dbc",
+    "difficulty": "complex"
+  },
+  {
+    "question": "在自定义过滤器配置示例中，哪些单词被指定为自定义停用词？",
+    "ground_truth": "根据提供的上下文，自定义过滤器配置中指定的自定义停用词是 \"of\" 和 \"to\"。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "d148876ddc2e9ed476ba072f40d873f4": 2
+    },
+    "expected_sources": [
+      "analyzer-overview.md"
+    ],
+    "seed_chunk_id": "d148876ddc2e9ed476ba072f40d873f4",
+    "difficulty": "simple"
+  },
+  {
+    "question": "用于在 Milvus 中为动态 JSON 字段建立索引的 `index_params` 对象包含哪些组件，每个字段分别指定了什么内容？",
+    "ground_truth": "根据提供的上下文，`index_params` 对象包含五个组件：\n- `field_name`：设置为 `\"color\"`，表示查询中可见的“列”名称（即动态键）。\n- `index_type`：设置为 `\"INVERTED\"`，这是为 JSON 字段建立索引时唯一支持的类型。\n- `index_name`：设置为 `\"color_index\"`，为索引指定的名称。\n- `params`：一个对象，包含：\n  - `\"json_path\"`：设置为 `\"color\"`，表示被索引键的 JSON 路径。\n  - `\"json_cast_type\"`：设置为 `\"varchar\"`，Milvus 将对提取的值进行类型转换的目标类型。\n代码片段以注释 `// Create the index await client` 结尾，表明该对象作为客户端创建索引方法的输入。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "7c4d8fcca66ef012df1db44c5a526d77": 2
+    },
+    "expected_sources": [
+      "enable-dynamic-field.md"
+    ],
+    "seed_chunk_id": "7c4d8fcca66ef012df1db44c5a526d77",
+    "difficulty": "medium"
+  },
+  {
+    "question": "ID为8的项目的颜色是什么？",
+    "ground_truth": "ID为8的项目的颜色是\"white_9381\"。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "f9cf74f2efeab609dfc3034b100697eb": 2
+    },
+    "expected_sources": [
+      "enable-dynamic-field.md"
+    ],
+    "seed_chunk_id": "f9cf74f2efeab609dfc3034b100697eb",
+    "difficulty": "simple"
+  },
+  {
+    "question": "什么时候应该使用第二个配置示例？",
+    "ground_truth": "如果你未使用 MySQL 来管理 Milvus 1.x 中的向量 ID，则应使用第二个配置示例。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "6741649e0854c02f05078217a6ee0f3f": 2
+    },
+    "expected_sources": [
+      "m2m_legacy.md"
+    ],
+    "seed_chunk_id": "6741649e0854c02f05078217a6ee0f3f",
+    "difficulty": "simple"
+  },
+  {
+    "question": "在 Go 中调用 `WithAnnParam` 后，如何从 Weaviate 搜索结果集中获取 ID、分数和元数据？",
+    "ground_truth": "根据提供的代码片段，在调用 `WithAnnParam(annParam)` 并检查错误（例如 `if err != nil { fmt.Println(err.Error()) // handle error }`）后，使用 `for _, resultSet := range resultSets` 循环遍历 `resultSets`。在循环内部，可通过 `resultSet.IDs.FieldData().GetScalars()` 获取并打印 ID，通过 `resultSet.Scores` 获取分数，通过 `resultSet.GetColumn(\"metadata\").FieldData().GetScalars()` 获取元数据。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "d5647e33a2b061185924ffdc937aad70": 2
+    },
+    "expected_sources": [
+      "use-json-fields.md"
+    ],
+    "seed_chunk_id": "d5647e33a2b061185924ffdc937aad70",
+    "difficulty": "medium"
+  },
+  {
+    "question": "在 Milvus 集群中，默认的对象存储方案是什么？如果我想改用外部对象存储而非默认方案，应该如何配置？",
+    "ground_truth": "默认情况下，Milvus Operator 会为 Milvus 部署一个集群内的 MinIO 作为内部对象存储。如果要改用外部对象存储（例如 S3），需要在配置文件的 `spec.dependencies.storage` 下添加相应字段，可能的选项包括 `external`（用于外部存储，如 S3）和 `inCluster`（用于内部 MinIO）。因此，选择 `external` 即可切换到外部对象存储。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "5b1f6057719e07525bae2bd4a4541a05": 2
+    },
+    "expected_sources": [
+      "object_storage_operator.md"
+    ],
+    "seed_chunk_id": "5b1f6057719e07525bae2bd4a4541a05",
+    "difficulty": "complex"
+  },
+  {
+    "question": "Milvus 需要解决哪两个问题以维护跨节点的 DML 和 DDL 操作顺序，它采用了什么解决方案？",
+    "ground_truth": "作为一个分布式向量数据库，Milvus 必须解决两个主要问题以保持所有 DML 和 DDL 操作在节点间的顺序。首先，不同节点的时钟可能不同步——例如，若用户 2 的时钟比用户 1 慢 24 小时，那么用户 2 直到第二天才能看到用户 1 的所有操作。其次，网络延迟可能导致操作到达顺序错乱；例如，若 t15 时刻的删除操作因网络延迟被耽搁，用户 2 在 t17 时刻进行搜索时仍可能看到已删除的数据 A1。为解决这些问题，Milvus 采用了一种名为 timetick 的时间同步系统。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "9a198142edbfd9b40c1e4e11eb9bc885": 2
+    },
+    "expected_sources": [
+      "time_sync.md"
+    ],
+    "seed_chunk_id": "9a198142edbfd9b40c1e4e11eb9bc885",
+    "difficulty": "medium"
+  },
+  {
+    "question": "querycoord.autobalance 的值是多少？",
+    "ground_truth": "querycoord.autobalance 的值为 true。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "81de003cfbf68caa159827b2fc4059b9": 2
+    },
+    "expected_sources": [
+      "birdwatcher_usage_guides.md"
+    ],
+    "seed_chunk_id": "81de003cfbf68caa159827b2fc4059b9",
+    "difficulty": "simple"
+  },
+  {
+    "question": "在所提供的代码中，当使用过滤表达式 `\"id == 1\"` 调用 `query_data` 方法时，它返回什么内容，结果中包含哪些字段？",
+    "ground_truth": "`query_data` 方法返回一个包含单个字典的列表：`[{'id': 1, 'text': 'foo'}]`。结果仅包含已插入数据中的 `id` 和 `text` 字段；`float_vector` 字段不出现在输出中。这与 `id` 等于 1 的行匹配（原始插入中为 `id: 1`、`text: 'foo'`、`float_vector: [1,2,3]`）。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "dda7f69573175d3eab2e4e1f8691c06c": 2
+    },
+    "expected_sources": [
+      "using_milvusclient.md"
+    ],
+    "seed_chunk_id": "dda7f69573175d3eab2e4e1f8691c06c",
+    "difficulty": "medium"
+  },
+  {
+    "question": "text-embedding-3-large 是有效的 model_name 吗？",
+    "ground_truth": "是的，根据上下文，有效选项包括 text-embedding-3-large，因此 text-embedding-3-large 是有效的 OpenAI 模型名称。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "9bb7efc03d2a883ef8572607b64d1ef8": 2
+    },
+    "expected_sources": [
+      "embed-with-openai.md"
+    ],
+    "seed_chunk_id": "9bb7efc03d2a883ef8572607b64d1ef8",
+    "difficulty": "simple"
+  },
+  {
+    "question": "FLAT index 的召回率是多少？",
+    "ground_truth": "FLAT index 提供 100% 的召回率，因为它的暴力搜索方法会评估每一个潜在匹配，保证准确性。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "0b90938919e65881ab80748b08b63885": 2
+    },
+    "expected_sources": [
+      "flat.md"
+    ],
+    "seed_chunk_id": "0b90938919e65881ab80748b08b63885",
+    "difficulty": "simple"
+  },
+  {
+    "question": "在 metrics_dashboard.md 提供的上下文中，指标 `milvus_querynode_load_segment_latency_bucket` 的聚合分组是什么？该指标表示什么？",
+    "ground_truth": "该指标按 `pod` 和 `node_id` 分组，如查询中 `by(pod, node_id)` 子句所示。它表示来自不同 bucket 的合并搜索任务中原始搜索任务的数量。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "c119971ccfd216eb48a801c413d9cf00": 2
+    },
+    "expected_sources": [
+      "metrics_dashboard.md"
+    ],
+    "seed_chunk_id": "c119971ccfd216eb48a801c413d9cf00",
+    "difficulty": "complex"
+  },
+  {
+    "question": "如何配置停用词过滤器，使其同时包含自定义停用词和默认的英文停用词列表？",
+    "ground_truth": "根据上下文，要在停用词过滤器中同时包含自定义停用词和默认的英文停用词列表，需要在过滤器参数中定义\"stop_words\"列表。该列表应包含要过滤的自定义词（例如\"of\"和\"to\"），然后添加特殊关键字\"_english_\"。这会指示分析器同时应用内置的英文停用词列表。示例配置正是如此：`\"stop_words\": [\"of\", \"to\", \"_english_\"]`。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "635644057656e0ee569d29324e959632": 2
+    },
+    "expected_sources": [
+      "stop-filter.md"
+    ],
+    "seed_chunk_id": "635644057656e0ee569d29324e959632",
+    "difficulty": "complex"
+  },
+  {
+    "question": "上下文中描述了两个指标，它们分别衡量什么？",
+    "ground_truth": "上下文描述了两个指标。第一个是 `sum(milvus_querycoord_entity_num{...}) by (app_kubernetes_io_instance)`，它衡量“Milvus 当前加载的实体数量”。第二个是“加载请求速率”，它衡量“过去两分钟内每秒的加载请求数”。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "22fae454e1a4d24cd5d58a40c49b2cf9": 2
+    },
+    "expected_sources": [
+      "metrics_dashboard.md"
+    ],
+    "seed_chunk_id": "22fae454e1a4d24cd5d58a40c49b2cf9",
+    "difficulty": "medium"
+  },
+  {
+    "question": "CreateCollection 示例中使用的集合名称是什么？",
+    "ground_truth": "集合名称为 \"customized_setup_1\"。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "3aba7b3b5c87dbb3665c855629bb2d2f": 2
+    },
+    "expected_sources": [
+      "create-collection.md"
+    ],
+    "seed_chunk_id": "3aba7b3b5c87dbb3665c855629bb2d2f",
+    "difficulty": "simple"
+  },
+  {
+    "question": "三个代码片段中执行的常见操作是什么？每种语言使用哪些具体参数和方法来修改字段的最大容量？",
+    "ground_truth": "三个代码片段都修改了名为\"my_collection\"的集合中名为\"array\"的集合字段，将其`max_capacity`属性设置为64。  \n- 在Python中：调用方法`client.alter_collection_field()`，参数为`collection_name=\"my_collection\"`、`field_name=\"array\"`和`field_params={\"max_capacity\": 64}`。  \n- 在Java中：调用方法`client.alterCollectionField()`，使用`AlterCollectionFieldReq.builder()`，配合`.collectionName(\"my_collection\")`、`.fieldName(\"array\")`和`.property(\"max_capacity\", \"64\")`。`max_capacity`的值指定为字符串`\"64\"`。  \n- 在JavaScript中：调用方法`client.alterCollectionFieldProperties()`，参数为`{ collection_name: \"my_collection\", field_name: \"array\", properties: { max_capacity: 64 } }`。此处`max_capacity`以数字`64`形式给出。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "2f028a1c0e40718b2e3a8a697e478004": 2
+    },
+    "expected_sources": [
+      "alter-collection-field.md"
+    ],
+    "seed_chunk_id": "2f028a1c0e40718b2e3a8a697e478004",
+    "difficulty": "medium"
+  },
+  {
+    "question": "使用提供的 Milvus REST API 示例，创建分区需要哪些环境变量和 HTTP 头？成功创建的预期 JSON 响应是什么？",
+    "ground_truth": "要使用 Milvus REST API 创建分区，必须首先设置两个环境变量：`CLUSTER_ENDPOINT`（例如 `http://localhost:19580`）和 `TOKEN`（例如 `root:Milvus`）。HTTP 请求必须包含 `Authorization: Bearer ${TOKEN}` 和 `Content-Type: application/json` 请求头。该请求为 POST 到 `${CLUSTER_ENDPOINT}/v2/vectordb/partitions/create`，其 JSON 主体包含 `\"collectionName\": \"my_collection\"` 和 `\"partitionName\": \"partitionA\"`。成功创建后，预期的响应是一个 JSON 对象，包含 `\"code\": 0` 和 `\"data\": {}`。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "3b937e9bda0ed9998f5d707178d184b4": 2
+    },
+    "expected_sources": [
+      "manage-partitions.md"
+    ],
+    "seed_chunk_id": "3b937e9bda0ed9998f5d707178d184b4",
+    "difficulty": "complex"
+  },
+  {
+    "question": "在提供的将数据插入 Milvus 的代码中，每个处理过的片段在插入前经历了怎样的转换？最终的插入调用中，数据结构是如何组织的？",
+    "ground_truth": "每个处理过的片段首先被传递给 `emb_text(section)` 函数，以生成一个嵌入向量。然后，针对每个片段，创建一个包含三个键的字典：`\"id\"`（设为枚举索引 `i`）、`\"vector\"`（设为计算出的嵌入向量）和 `\"text\"`（设为原始片段字符串）。这些字典被添加到一个名为 `data` 的列表中。所有片段处理完毕后，列表 `data` 被传递给 `milvus_client.insert(collection_name=collection_name, data=data)`，以批量插入到指定的 Milvus 集合中。代码还在这个转换和收集阶段使用 `tqdm` 显示进度条。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "725951a6d0e5bf695a531b69ba79bf7d": 2
+    },
+    "expected_sources": [
+      "build_RAG_with_milvus_and_crawl4ai.md"
+    ],
+    "seed_chunk_id": "725951a6d0e5bf695a531b69ba79bf7d",
+    "difficulty": "complex"
+  },
+  {
+    "question": "在所提供指标面板中，Milvus 查询节点的第 99 百分位和平均查询请求延迟是如何计算的？",
+    "ground_truth": "第 99 百分位（p99）延迟通过以 `.99, sum by (le, pod, node_id) (rate(milvus_querynode_sq_req_latency_bucket{ ... }[2m]))` 开头的表达式计算——这是一个 Prometheus 直方图分位数计算，其中 `.99` 是分位数阈值，直方图桶在 2 分钟窗口内的速率按标签 `le`（桶上限）、`pod` 和 `node_id` 聚合。平均延迟计算为：`avg: sum(increase(milvus_querynode_sq_req_latency_sum{ ... }[2m])) by (pod, node_id, query_type) / sum(increase(milvus_querynode_sq_req_latency_count{ ... }[2m]))`——即将总延迟总和（2 分钟内的增量）除以总请求计数（2 分钟内的增量），并按 `pod`、`node_id` 和 `query_type` 分组。这两个指标均应用了 Prometheus 针对实例、应用名称和命名空间的过滤器。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "2e37ac62e0bbae6c5f357efda5d409a2": 2
+    },
+    "expected_sources": [
+      "metrics_dashboard.md"
+    ],
+    "seed_chunk_id": "2e37ac62e0bbae6c5f357efda5d409a2",
+    "difficulty": "medium"
+  },
+  {
+    "question": "假设有一个字段，其基数约为200，数据类型为JSON，是否应该为该字段创建bitmap index？请说明理由。",
+    "ground_truth": "不应该为该字段创建bitmap index。原因有二：第一，根据上下文，JSON数据类型具有复杂的结构，无法使用bitmap index高效表示，属于不兼容类型。第二，虽然该字段的基数（200）小于500，理论上满足bitmap index的有效基数范围，但数据类型的不兼容性导致无法应用。因此，即使基数适合，JSON字段也不适合使用bitmap index，应考虑其他索引技术。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "60e8006a7c21ef300083260f717c526c": 2
+    },
+    "expected_sources": [
+      "bitmap.md"
+    ],
+    "seed_chunk_id": "60e8006a7c21ef300083260f717c526c",
+    "difficulty": "complex"
+  },
+  {
+    "question": "在使用 VectorETL 时，如何根据不同的数据规模和部署方式配置 host 和 api_key？",
+    "ground_truth": "根据上下文，host 和 api_key 的配置有三种情况：1）对于本地小规模数据，将 host 设置为本地文件路径（如 ./milvus.db），并将 api_key 留空，系统会自动利用 Milvus Lite 将所有数据存储在此文件中。2）对于大规模数据，可以在 docker 或 kubernetes 上部署高性能 Milvus 服务器，此时 host 应设置为服务器 uri（如 http://localhost:19530），且 api_key 留空。3）如果使用 Zilliz Cloud（Milvus 的完全托管云服务），则 host 和 api_key 分别对应 Zilliz Cloud 中的公共端点和 API 密钥。此外，配置完 host 和 api_key 后，还需要通过设置 embed_columns（例如 [\"col_1\", \"col_2\", \"col_3\"]）指定要转换为嵌入的列，然后创建并执行 VectorETL 流水线。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "02aaccc3e68a689b46a86c61822454bc": 2
+    },
+    "expected_sources": [
+      "ETL_using_vectorETL.md"
+    ],
+    "seed_chunk_id": "02aaccc3e68a689b46a86c61822454bc",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Milvus 使用什么作为对象存储，以及它可以轻松部署在哪些云存储服务上？",
+    "ground_truth": "Milvus 使用 MinIO 作为对象存储，并且可以轻松部署在 AWS S3 和 Azure Blob 上。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "22aefe5c97ddeeef5f3aa3c64d0e4e5f": 2
+    },
+    "expected_sources": [
+      "four_layers.md"
+    ],
+    "seed_chunk_id": "22aefe5c97ddeeef5f3aa3c64d0e4e5f",
+    "difficulty": "simple"
+  },
+  {
+    "question": "根据上下文，当内存只能容纳原始数据的四分之一时，推荐使用哪种索引类型？这种方法可能带来什么权衡？",
+    "ground_truth": "当内存只能容纳原始数据的四分之一时，上下文推荐使用DiskANN以获得稳定的延迟。然而，将部分索引存储在硬盘上（如DiskANN的做法）会引入潜在的IOPS瓶颈，从而影响性能。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "8943459fc1bd5e5f9ede8981df36e256": 2
+    },
+    "expected_sources": [
+      "index-explained.md"
+    ],
+    "seed_chunk_id": "8943459fc1bd5e5f9ede8981df36e256",
+    "difficulty": "medium"
+  },
+  {
+    "question": "\"quick_setup\"集合中第一个导入文件的文件大小（以字节为单位）是多少？",
+    "ground_truth": "第一个导入的文件（路径包含\"1.parquet\"）的文件大小为31567874字节。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "d2f03c9579aeb736bb3ecff95d622c50": 2
+    },
+    "expected_sources": [
+      "import-data.md"
+    ],
+    "seed_chunk_id": "d2f03c9579aeb736bb3ecff95d622c50",
+    "difficulty": "simple"
+  },
+  {
+    "question": "如何为查询创建嵌入向量？需要使用什么方法？",
+    "ground_truth": "为查询创建嵌入向量，需要使用 `encode_queries()` 方法。例如，可以定义一个查询列表 `queries = [\"When was artificial intelligence founded\", \"Where was Alan Turing born?\"]`，然后调用 `query_embeddings = ef.encode_queries(queries)` 来生成嵌入向量。输出会打印嵌入向量及其维度信息，如 `print(\"Embeddings:\", query_embeddings)` 和 `print(\"Dim\", ef.dim, query_embeddings[0].shape)`。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "0df31281d512b66f3a2de8fdc65f93e4": 2
+    },
+    "expected_sources": [
+      "embed-with-instructor.md"
+    ],
+    "seed_chunk_id": "0df31281d512b66f3a2de8fdc65f93e4",
+    "difficulty": "medium"
+  },
+  {
+    "question": "在提供的代码中查询集合\"my_collection\"时使用了什么过滤条件？",
+    "ground_truth": "过滤条件是'age == 18'，表示只检索age字段等于18的文档。代码中设置 `const filter = 'age == 18';` 并将其传递给查询。指定的输出字段是\"age\"、\"price\"和\"pk\"。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "84cf50c7a52729b3a1d0ed8fc3262986": 2
+    },
+    "expected_sources": [
+      "number.md"
+    ],
+    "seed_chunk_id": "84cf50c7a52729b3a1d0ed8fc3262986",
+    "difficulty": "simple"
+  },
+  {
+    "question": "在示例配置中，内部 etcd 服务的 replicaCount 值是多少？",
+    "ground_truth": "在示例配置中，内部 etcd 服务的 replicaCount 为 5。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "865de4c6cf55f465f6a9605d0a23cac7": 2
+    },
+    "expected_sources": [
+      "meta_storage_operator.md"
+    ],
+    "seed_chunk_id": "865de4c6cf55f465f6a9605d0a23cac7",
+    "difficulty": "simple"
+  },
+  {
+    "question": "针对名为 'milvus-eks-cluster' 的 Milvus EKS 集群，安装 AWS Load Balancer Controller 的具体步骤和参数是什么？如何验证安装？",
+    "ground_truth": "首先，通过运行 `helm repo add eks https://aws.github.io/eks-charts` 添加 Helm 图表仓库，然后使用 `helm repo update` 更新仓库。接着，使用命令 `helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName='milvus-eks-cluster' --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller` 安装 AWS Load Balancer Controller。该命令将控制器安装在 kube-system 命名空间中，目标集群名为 'milvus-eks-cluster'，并假定已存在名为 'aws-load-balancer-controller' 的服务账户（因为 serviceAccount.create 设为 false）。要验证安装，运行 `kubectl get deployment -n kube-system aws-load-balancer-controller` 以确认部署存在且正在运行。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "825545434a01e092fc7a79cc394fe328": 2
+    },
+    "expected_sources": [
+      "eks.md"
+    ],
+    "seed_chunk_id": "825545434a01e092fc7a79cc394fe328",
+    "difficulty": "complex"
+  },
+  {
+    "question": "在embed-with-cohere.md文档中，如何为查询列表创建嵌入向量？",
+    "ground_truth": "使用 `encode_queries()` 方法，例如 `query_embeddings = cohere_ef.encode_queries(queries)`，其中 `queries` 是一个字符串列表（如 `[\"When was artificial intelligence founded\", \"Where was Alan Turing born?\"]`）。该方法返回嵌入向量，可通过 `print(\"Embeddings:\", query_embeddings)` 打印嵌入，并通过 `print(\"Dim\", cohere_ef.dim, query_embeddings[0].shape)` 查看维度。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "893bdeb42d89ed6509dc706d9970943d": 2
+    },
+    "expected_sources": [
+      "embed-with-cohere.md"
+    ],
+    "seed_chunk_id": "893bdeb42d89ed6509dc706d9970943d",
+    "difficulty": "simple"
+  },
+  {
+    "question": "如何在LangChain中调用带有源过滤器的动态可配置RAG链？",
+    "ground_truth": "要调用带有源过滤器的动态可配置RAG链 `rag_chain2`，请使用 `.with_config()` 方法。在 `configurable` 字典中，将键 `\"retriever_search_kwargs\"` 设置为一个字典，其中包含键 `expr` 并以字符串形式给出过滤器表达式。例如，要按特定源过滤，使用 `dict(expr=\"source == 'https://lilianweng.github.io/posts/2023-06-23-agent/'\")`。然后在结果上调用 `.invoke(query)`。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "50fc31da9476c6be57fd5da57ed02ccb": 2
+    },
+    "expected_sources": [
+      "integrate_with_langchain.md"
+    ],
+    "seed_chunk_id": "50fc31da9476c6be57fd5da57ed02ccb",
+    "difficulty": "simple"
+  },
+  {
+    "question": "如何在 Milvus CLI 中列出某个角色在 Collection 对象上的权限？",
+    "ground_truth": "使用 `list grants` 命令，通过 `-r`（或 `--roleName`）选项指定角色名称，`-o`（或 `--objectName`）选项指定对象名称，`-t`（或 `--objectType`）选项设置为 `Collection`。例如：`milvus_cli > list grants -r role1 -o object1 -t Collection`。`--help` 选项可查看命令的使用帮助。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "afc08552dffbe75b41229fa7e6cd2a31": 2
+    },
+    "expected_sources": [
+      "cli_commands.md"
+    ],
+    "seed_chunk_id": "afc08552dffbe75b41229fa7e6cd2a31",
+    "difficulty": "medium"
+  },
+  {
+    "question": "根据上下文，哪些索引类型同时支持“非常高速的查询”和“需要尽可能高的召回率”？它们各自的内存资源要求是什么？",
+    "ground_truth": "根据提供的上下文，同时满足“非常高速的查询”和“需要尽可能高的召回率”的索引类型有两种：HNSW 和 SCANN。其中，HNSW 是“基于图的索引”，需要大内存资源；SCANN 是“基于量化的索引”，同样需要大内存资源。注意，IVF_FLAT 虽然也要求“需要尽可能高的召回率”，但其查询速度描述为“高速查询”而非“非常高速”，因此不包含在内。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "c021e12748c9917e0592d2352135e4f5": 2
+    },
+    "expected_sources": [
+      "reference.md"
+    ],
+    "seed_chunk_id": "c021e12748c9917e0592d2352135e4f5",
+    "difficulty": "medium"
+  },
+  {
+    "question": "在部署Milvus集群之前，如何确认Milvus Operator已经成功安装并处于可运行状态？请列出具体的操作命令和判断依据。",
+    "ground_truth": "首先，需要检查Milvus Operator的pod是否在运行。使用命令 `kubectl get pods -n milvus-operator` 查看。如果pod的状态为 `Running`（例如示例中显示的 `milvus-operator-5fd77b87dc-msrk4` 的STATUS为 `Running`），则说明Milvus Operator已成功安装并正在运行。只有在这个前置条件满足后，才能执行下一步部署Milvus集群的命令：`kubectl apply -f https://raw.githubusercontent.com/zilliztech/milvus-operator/main/config/samples/milvus_cluster_default.yaml`。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "f168b6a2628215cffb2ed43d2a1263e7": 2
+    },
+    "expected_sources": [
+      "install_cluster-milvusoperator.md"
+    ],
+    "seed_chunk_id": "f168b6a2628215cffb2ed43d2a1263e7",
+    "difficulty": "complex"
+  },
+  {
+    "question": "在将数据导入partition_1时，指定了哪些集合参数值？",
+    "ground_truth": "将数据导入分区'partition_1'时，集合参数包括向量维度512、索引文件大小1024以及相似度度量类型'HAMMING'。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "df7ba790f516f44d386449e715b0a392": 2
+    },
+    "expected_sources": [
+      "h2m.md"
+    ],
+    "seed_chunk_id": "df7ba790f516f44d386449e715b0a392",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Milvus 模式中的 'tags' 和 'rating' 数组字段有哪些规格？哪个字段充当主键？",
+    "ground_truth": "在提供的模式中，'tags' 字段的数据类型为 Array，元素类型为 VarChar，最大容量为 10，最大长度为 65535。'rating' 字段也是 Array 类型，但元素类型为 Int64，最大容量为 5。名为 'pk' 的字段数据类型为 Int64，并标记为主键（is_primary_key: true）。此外，该模式还包含一个类型为 FloatVector、维度为 3 的 'embedding' 字段。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "1d6b52a8e73feb7e977a196642430ae7": 2
+    },
+    "expected_sources": [
+      "array_data_type.md"
+    ],
+    "seed_chunk_id": "1d6b52a8e73feb7e977a196642430ae7",
+    "difficulty": "medium"
+  },
+  {
+    "question": "从向量数据库中撤销用户角色的确切 curl 命令和所需参数是什么？",
+    "ground_truth": "根据上下文，撤销角色权限的命令是向 `${CLUSTER_ENDPOINT}/v2/vectordb/users/revoke_role` 发送 POST 请求。该请求需要包含 `Authorization: Bearer ${TOKEN}` 头部以及一个包含 `userName` 和 `roleName` 字段的 JSON 请求体。示例展示了从用户 `user_1` 撤销角色 `role_a` 的操作。该命令使用了 `${CLUSTER_ENDPOINT}` 和 `${TOKEN}` 占位符分别表示集群端点与认证令牌。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "b446bc2ecb0d593040757b2c6d9286f4": 2
+    },
+    "expected_sources": [
+      "grant_roles.md"
+    ],
+    "seed_chunk_id": "b446bc2ecb0d593040757b2c6d9286f4",
+    "difficulty": "medium"
+  },
+  {
+    "question": "根据所提供的上下文，使用 Model2Vec 为文档创建嵌入的方法是什么？",
+    "ground_truth": "根据上下文，要为文档创建嵌入，您可以使用 `encode_documents()` 方法。例如，将文档列表（如 `docs = [\"Artificial intelligence...\", \"Alan Turing...\", \"Born in Maida Vale...\"]`）传递给 `model2vec_ef.encode_documents(docs)`。该方法返回嵌入，您还可以使用 `model2vec_ef.dim` 和 `docs_embeddings[0].shape` 打印其维度和形状。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "1287bb30713f8f368da3736f155eed0d": 2
+    },
+    "expected_sources": [
+      "embed-with-model2vec.md"
+    ],
+    "seed_chunk_id": "1287bb30713f8f368da3736f155eed0d",
+    "difficulty": "simple"
+  },
+  {
+    "question": "示例中使用的集合名称和嵌入向量的维度是什么？",
+    "ground_truth": "集合名称为 'image_search'，嵌入向量维度为 2048，这与全局参数中的定义一致。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "8d586bf9138fbef2431caa142076a4c5": 2
+    },
+    "expected_sources": [
+      "integrate_with_pytorch.md"
+    ],
+    "seed_chunk_id": "8d586bf9138fbef2431caa142076a4c5",
+    "difficulty": "simple"
+  },
+  {
+    "question": "Milvus中默认的最大内存池大小（maxMemSize）是多少？",
+    "ground_truth": "默认的maxMemSize为2048。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "a4f6ee676518d733beda1a014eb4cb0a": 2
+    },
+    "expected_sources": [
+      "install_standalone-docker-compose-gpu.md"
+    ],
+    "seed_chunk_id": "a4f6ee676518d733beda1a014eb4cb0a",
+    "difficulty": "simple"
+  },
+  {
+    "question": "在提供的配置中，Pulsar 的最大消息大小是多少？",
+    "ground_truth": "Pulsar 的最大消息大小为 5242880 字节，相当于 5 * 1024 * 1024 字节（5 MB）。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "e6bf09ffd9e561418bbe29c5982a058b": 2
+    },
+    "expected_sources": [
+      "deploy_pulsar.md"
+    ],
+    "seed_chunk_id": "e6bf09ffd9e561418bbe29c5982a058b",
+    "difficulty": "simple"
+  },
+  {
+    "question": "在上下文中，由 OIDC sub 声明指示的 Kubernetes 服务账户是什么？",
+    "ground_truth": "OIDC sub 声明为 \"system:serviceaccount:default:my-service-account\"，指示在 \"default\" 命名空间中名为 \"my-service-account\" 的服务账户。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "e74f0a4db23f5e762eeeabae2aa6a490": 2
+    },
+    "expected_sources": [
+      "s3.md"
+    ],
+    "seed_chunk_id": "e74f0a4db23f5e762eeeabae2aa6a490",
+    "difficulty": "simple"
+  },
+  {
+    "question": "将Milvus-CDC服务器编译为二进制文件并启动的步骤是什么？",
+    "ground_truth": "要将Milvus-CDC服务器编译为二进制文件，首先保存cdc.yaml文件，然后进入milvus-cdc目录并运行命令 `make build`。编译完成后，确保目录结构中包含milvus-cdc二进制文件以及一个包含cdc.yaml文件的configs文件夹。然后，要启动服务器，进入包含milvus-cdc二进制文件和configs目录（configs/cdc.yaml配置文件用于CDC和源Milvus配置）的目录，并运行命令 `./milvus-cdc server`。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "db9660d85f3913cd1486a1e317b09856": 2
+    },
+    "expected_sources": [
+      "deploy-cdc-server.md"
+    ],
+    "seed_chunk_id": "db9660d85f3913cd1486a1e317b09856",
+    "difficulty": "medium"
+  },
+  {
+    "question": "为公共 IP 地址分配 DNS 名称的 Azure CLI 命令是什么？生成的 FQDN 输出示例是什么？",
+    "ground_truth": "上下文提供了一系列 Azure CLI 命令，用于为现有的公共 IP 地址分配 DNS 名称。首先，将变量 `IP` 设置为公共 IP 地址（例如 `IP=\"MY_EXTERNAL_IP\"`）。然后，通过执行 `az network public-ip list --query \"[?ipAddress!=null]|[?contains(ipAddress, '$IP')].[id]\" --output tsv` 获取该公共 IP 的资源 ID，并将其存储在 `PUBLICIPID` 中。接下来，通过运行 `az network public-ip update --ids $PUBLICIPID --dns-name $DNS_LABEL`（其中 `$DNS_LABEL` 为预定义变量）来更新公共 IP 的 DNS 标签。最后，使用 `az network public-ip show --ids $PUBLICIPID --query \"[dnsSettings.fqdn]\" --output tsv` 显示完全限定域名（FQDN）。上下文中的示例输出为 `milvustest.eastus2.cloudapp.azure.com`。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "fd6c6fb95ff41d8576b019a20f41508a": 2
+    },
+    "expected_sources": [
+      "ingress.md"
+    ],
+    "seed_chunk_id": "fd6c6fb95ff41d8576b019a20f41508a",
+    "difficulty": "medium"
+  },
+  {
+    "question": "在Google Colab中安装依赖项后，需要使用什么操作来启用刚安装的依赖项？",
+    "ground_truth": "需要重启运行时。具体操作是点击屏幕顶部的\"Runtime\"菜单，并从下拉菜单中选择\"Restart session\"。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "d1e9392e7a62b7448e82211b6405ee0b": 2
+    },
+    "expected_sources": [
+      "llamaindex_milvus_async.md"
+    ],
+    "seed_chunk_id": "d1e9392e7a62b7448e82211b6405ee0b",
+    "difficulty": "simple"
+  },
+  {
+    "question": "列出集合 \"my_collection_1\" 的别名时，输出是什么？",
+    "ground_truth": "输出是 \"[bob]\"，如代码片段中 `System.out.println(listAliasRes.getAlias());` 打印别名列表所示。",
+    "contexts": [],
+    "answer": "",
+    "relevance_labels": {
+      "4f79a258de94b205e39ed74b28dbde52": 2
+    },
+    "expected_sources": [
+      "manage-aliases.md"
+    ],
+    "seed_chunk_id": "4f79a258de94b205e39ed74b28dbde52",
+    "difficulty": "simple"
+  }
+]

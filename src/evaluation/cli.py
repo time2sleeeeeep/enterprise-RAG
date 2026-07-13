@@ -3,7 +3,7 @@
 # 用法：
 #   python -m src.evaluation.cli generate-dataset --num-samples 50
 #   python -m src.evaluation.cli run --dataset eval_data/milvus_qa_dataset.json
-#   python -m src.evaluation.cli ablation --dataset eval_data/milvus_qa_dataset.json
+#   python -m src.evaluation.cli ablation --dataset eval_data/milvus_qa.json
 #   python -m src.evaluation.cli report --results-dir eval_results --format html
 
 import argparse

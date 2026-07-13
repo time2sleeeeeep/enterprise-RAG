@@ -17,22 +17,27 @@ def _get_llm_client() -> OpenAI:
 def _llm_judge(prompt: str) -> str:
     """向 LLM 发送评分提示，返回模型输出的原始文本。
 
-    temperature=0 保证确定性，但 DeepSeek 某些情况下会返回空字符串。
-    出现空输出时自动用 temperature=0.1 重试一次。
+    temperature=0.5 作为默认值，避免 DeepSeek 低温下复杂 prompt 频繁返回空输出的问题。
+    若仍出现空输出，降低温度至 0.3 重试一次，兼顾稳定性与输出质量。
     """
     client = _get_llm_client()
     judge_model = settings.eval_judge_model or settings.deepseek_model
-    for attempt, temp in enumerate([0, 0.1]):
+    for attempt, temp in enumerate([0.5, 0.3]):
         resp = client.chat.completions.create(
             model=judge_model,
             messages=[{"role": "user", "content": prompt}],
             temperature=temp,
-            max_tokens=256,
+            max_tokens=1024,
         )
-        raw = resp.choices[0].message.content.strip()
-        if raw:
-            return raw
-        logger.debug(f"LLM judge returned empty on attempt {attempt + 1} (temp={temp}), retrying...")
+        raw = resp.choices[0].message.content
+        if raw is not None:
+            raw = raw.strip()
+            if raw:
+                return raw
+        logger.debug(
+            f"LLM judge returned empty on attempt {attempt + 1} (temp={temp}), retrying..."
+        )
+    logger.warning("LLM judge exhausted all retries, returning empty string")
     return ""
 
 

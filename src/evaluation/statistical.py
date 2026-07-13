@@ -190,8 +190,11 @@ def run_ablation_with_stats(
         # 日志输出
         metric_lines = []
         for name, stats in sorted(result.metric_stats.items()):
-            ci = f"[{stats['ci_lower']:.3f}, {stats['ci_upper']:.3f}]"
-            metric_lines.append(f"  {name}: {stats['mean']:.4f} ± {stats['std']:.4f} 95%CI {ci}")
+            if "ci_lower" in stats and "ci_upper" in stats:
+                ci = f"[{stats['ci_lower']:.3f}, {stats['ci_upper']:.3f}]"
+                metric_lines.append(f"  {name}: {stats['mean']:.4f} ± {stats['std']:.4f} 95%CI {ci}")
+            else:
+                metric_lines.append(f"  {name}: {stats['mean']:.4f} ± {stats['std']:.4f}")
         logger.info(f"[{config.name}] Stats:\n" + "\n".join(metric_lines))
 
     # 保存汇总 JSON
