@@ -104,6 +104,51 @@ def _load_results_from_dir(results_dir: str) -> dict[str, dict]:
     return results
 
 
+def _normalize_timing(cfg_data: dict) -> dict[str, float]:
+    """统一从旧版 per_component_timing 或新版 latency_stats 中提取扁平延迟字典。
+
+    - 旧版 *_detail.json: per_component_timing = {"dense_search_ms": 4609, ...}
+    - 新版 *_stats_detail.json / ablation_statistical_summary.json:
+      latency_stats = {"dense_search_ms": {"mean_ms": 1913, "std_ms": 404}, ...}
+    """
+    # 旧格式：per_component_timing 已是一层 {key: ms}
+    timing = cfg_data.get("per_component_timing")
+    if timing and isinstance(timing, dict):
+        first_val = next(iter(timing.values()), None)
+        if isinstance(first_val, (int, float)):
+            return {k: v for k, v in timing.items() if isinstance(v, (int, float))}
+
+    # 新格式：latency_stats = {key: {mean_ms, std_ms}}
+    lat_stats = cfg_data.get("latency_stats", {})
+    flat: dict[str, float] = {}
+    for key, val in lat_stats.items():
+        if isinstance(val, dict) and "mean_ms" in val:
+            flat[key] = float(val["mean_ms"])
+        elif isinstance(val, (int, float)):
+            flat[key] = float(val)
+    return flat
+
+
+def _compute_avg_latency_seconds(cfg_data: dict) -> float:
+    """推算单样本平均延迟（秒）。
+
+    优先使用旧格式的 avg_service_latency / avg_latency，
+    否则从逐组件计时求和（排除了评估打分的 scoring_ms）。
+    """
+    svc = cfg_data.get("avg_service_latency") or cfg_data.get("avg_latency")
+    if svc and svc > 0:
+        return float(svc)
+    timing = _normalize_timing(cfg_data)
+    if not timing:
+        return 0.0
+    # scoring_ms 是评估开销，不计入业务延迟
+    total_ms = sum(
+        v for k, v in timing.items()
+        if k not in ("scoring_ms", "total_ms")
+    )
+    return total_ms / 1000.0
+
+
 def _sub_colors(template: str) -> str:
     """替换模板中的 {{color_name}} 占位符为实际颜色值（安全替换，不干扰 CSS 花括号）。"""
     result = template
@@ -254,15 +299,15 @@ def _render_latency_table(results: dict[str, dict]) -> str:
     rows.append(f"<tr>{header}</tr>")
 
     for cfg_name, cfg_data in results.items():
-        timing = cfg_data.get("per_component_timing", {})
+        timing = _normalize_timing(cfg_data)
         cells = f"<td><strong>{cfg_name}</strong></td>"
         total = 0.0
         for key, _ in timing_keys:
-            val = timing.get(key, 0) if isinstance(timing, dict) else 0
+            val = timing.get(key, 0)
             cells += f"<td>{val:.0f}</td>"
             total += val
         cells += f"<td><strong>{total:.0f}</strong></td>"
-        avg_s = cfg_data.get("avg_latency", 0)
+        avg_s = _compute_avg_latency_seconds(cfg_data)
         cells += f"<td>{avg_s:.2f}</td>"
         rows.append(f"<tr>{cells}</tr>")
 
@@ -540,7 +585,7 @@ def generate_markdown_report(
             for m in ordered:
                 val = metrics.get(m)
                 row += f" {val:.4f} |" if val is not None else " — |"
-            svc_lat = cfg_data.get("avg_service_latency", cfg_data.get("avg_latency", 0))
+            svc_lat = _compute_avg_latency_seconds(cfg_data)
             row += f" {svc_lat:.2f}s |"
             lines.append(row)
 
@@ -556,7 +601,8 @@ def generate_markdown_report(
         ("scoring_ms", "评分"),
     ]
     has_timing = any(
-        cfg_data.get("per_component_timing") for cfg_data in results.values()
+        cfg_data.get("per_component_timing") or cfg_data.get("latency_stats")
+        for cfg_data in results.values()
     )
     if has_timing:
         lines.append("## ⏱️ 延迟分解 (ms)")
@@ -567,11 +613,11 @@ def generate_markdown_report(
         lines.append(sep)
 
         for cfg_name, cfg_data in results.items():
-            timing = cfg_data.get("per_component_timing", {})
+            timing = _normalize_timing(cfg_data)
             row = f"| **{cfg_name}** |"
             total = 0.0
             for key, _ in timing_cols:
-                val = timing.get(key, 0) if isinstance(timing, dict) else 0
+                val = timing.get(key, 0)
                 row += f" {val:.0f} |"
                 total += val
             row += f" **{total:.0f}** |"

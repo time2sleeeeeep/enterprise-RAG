@@ -28,7 +28,7 @@ class ChatRequest(BaseModel):
     top_k: int = 5
     use_reranker: bool = True
     use_cache: bool = True
-    use_query_rewrite: bool = True
+    use_query_rewrite: bool = False
     use_multi_query: bool = False
 
 
