@@ -1,5 +1,7 @@
 # 重排序模块：封装 BGE Reranker 模型（单例），对检索召回的文档按查询相关性重新打分排序。
 
+import threading
+
 import numpy as np
 from loguru import logger
 from FlagEmbedding import FlagReranker
@@ -11,6 +13,7 @@ class BGEReranker:
     """BGE Reranker 模型单例封装，对 (query, document) 对计算相关性分数。"""
 
     _instance = None
+    _lock = threading.Lock()
 
     def __new__(cls):
         """确保全局只初始化一次重排序模型（单例模式）。"""
@@ -23,14 +26,17 @@ class BGEReranker:
         """加载 BGE Reranker 模型到指定设备，已初始化则直接返回。"""
         if self._initialized:
             return
-        logger.info(f"Loading reranker model on {settings.reranker_device}...")
-        self.model = FlagReranker(
-            settings.reranker_model_name,
-            use_fp16=(settings.reranker_device == "cuda"),
-            device=settings.reranker_device,
-        )
-        self._initialized = True
-        logger.info("Reranker model loaded successfully")
+        with BGEReranker._lock:
+            if self._initialized:
+                return
+            logger.info(f"Loading reranker model on {settings.reranker_device}...")
+            self.model = FlagReranker(
+                settings.reranker_model_name,
+                use_fp16=(settings.reranker_device == "cuda"),
+                device=settings.reranker_device,
+            )
+            self._initialized = True
+            logger.info("Reranker model loaded successfully")
 
     def rerank(
         self,

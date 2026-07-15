@@ -77,10 +77,22 @@ class HybridRetriever:
         self.collection: Collection | None = None
 
     def _get_collection(self) -> Collection:
-        """懒加载并返回已加载的 Milvus Collection。"""
+        """懒加载并返回已加载的 Milvus Collection。
+
+        注意：空集合调用 load() 会触发 Milvus QueryCoord 的无限等待循环（等待从未
+        出现的 segment），约 5 分钟后 gRPC 超时。因此先检查 num_entities，为 0 时
+        跳过 load() —— 空集合搜索会立即返回空结果，无需加载。[MILVUS_EMPTY_LOAD]
+        """
         if self.collection is None:
             self.collection = create_collection(settings.milvus_collection)
-            self.collection.load()
+            if self.collection.num_entities > 0:
+                self.collection.load()
+            else:
+                logger.warning(
+                    f"Collection '{settings.milvus_collection}' has 0 entities, "
+                    "skipping load() to avoid Milvus empty-collection hang. "
+                    "Search will return empty results until data is ingested."
+                )
         return self.collection
 
     def dense_search(

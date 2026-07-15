@@ -1,6 +1,7 @@
 # FastAPI 应用入口：初始化服务、注册路由、配置 CORS 和全局异常处理。
 # 启动时连接 MySQL/Milvus，关闭时断开连接并清理 Redis 连接池。
 
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -21,10 +22,38 @@ from src.db.redis_client import close_redis
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期管理：启动时初始化 DB 和 Milvus 连接，关闭时释放资源。"""
+    """应用生命周期管理：启动时初始化 DB、连接 Milvus、预热加载 collection，关闭时释放资源。
+
+    Collection 在启动时加载（而非首次请求延迟加载）可避免冷启动请求遭遇
+    Milvus 加载延迟。加载操作通过 asyncio.to_thread 卸载到线程池，不阻塞事件循环。[MILVUS_EMPTY_LOAD]
+    """
     logger.info("Starting Enterprise RAG service...")
     init_db()
     connect_milvus()
+
+    # 预热：加载 Milvus collection，避免首次请求的冷启动延迟
+    try:
+        from src.db.milvus_client import create_collection
+        from src.config import settings
+
+        def _warmup():
+            col = create_collection(settings.milvus_collection)
+            if col.num_entities > 0:
+                col.load()
+                logger.info(
+                    f"Collection '{settings.milvus_collection}' loaded "
+                    f"({col.num_entities} entities)"
+                )
+            else:
+                logger.warning(
+                    f"Collection '{settings.milvus_collection}' is empty — "
+                    "search will return empty results until documents are ingested"
+                )
+
+        await asyncio.to_thread(_warmup)
+    except Exception as e:
+        logger.error(f"Collection warmup failed (service will load lazily): {e}")
+
     yield
     disconnect_milvus()
     await close_redis()
